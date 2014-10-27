@@ -76,7 +76,8 @@ static void __evolute_electric(double *E, const double *B1, const double *B2)
 		double intD;
 		{
 			// length of the edge (i',3/2,k)
-			const double dtD = length_of_covariant_basic_vector<2, c>(p0, 1.5, p2);
+			const double dtD =
+					length_of_covariant_basic_vector<2, c>(p0, 1.5, p2);
 			const int lD = i + (N0-1)*(1 + (N1-1)*k);
 			intD = B2[lD]*dtD;
 		}
@@ -103,11 +104,14 @@ static void __evolute_electric(double *E, const double *B1, const double *B2)
 			assert(dS != 0.0);
 
 			// length of the edge (i',j,k-1/2)
-			const double dtA = length_of_covariant_basic_vector<1, c>(p0, p1, p2-0.5);
+			const double dtA =
+					length_of_covariant_basic_vector<1, c>(p0, p1, p2-0.5);
 			// length of the edge (i',j,k+1/2)
-			const double dtB = length_of_covariant_basic_vector<1, c>(p0, p1, p2+0.5);
+			const double dtB =
+					length_of_covariant_basic_vector<1, c>(p0, p1, p2+0.5);
 			// length of the edge (i',j+1/2,k)
-			const double dtD = length_of_covariant_basic_vector<2, c>(p0, p1+0.5, p2);
+			const double dtD =
+					length_of_covariant_basic_vector<2, c>(p0, p1+0.5, p2);
 
 			// position of B1(i',j,k-1/2)
 			const int lA = k-1 + (N2-1)*(i + (N0-1)*j);
@@ -134,7 +138,8 @@ static void __evolute_electric(double *E, const double *B1, const double *B2)
 }
 
 /*
- * Evolute electric fields with leap-frog method following Ampère's circuital law.
+ * Evolute electric fields with leap-frog method
+ * following Ampère's circuital law.
  * NOTICE:  Now I omit electric current term.
  */
 void evolute_electric(
