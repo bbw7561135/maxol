@@ -25,19 +25,24 @@ int output(const double *Ep, const double *Eq, const double *Er,
 
 	char fpath[1024];
 	if (sprintf(fpath, "%s/B%08d.bin", DIR_OUT, nt) == EOF) {
-		fprintf(stderr, "Path %s/B%08d.bin is too long. %s:%d\n", DIR_OUT, nt, __FILE__, __LINE__);
+		fprintf(stderr, "Path %s/B%08d.bin is too long. %s:%d\n",
+				DIR_OUT, nt, __FILE__, __LINE__);
 		free(EB);
 		return ENAMETOOLONG;
 	}
 
 	const int fdB = open(fpath, O_WRONLY | O_CREAT);
 	if (fdB == -1) {
+		fprintf(stderr, "Failed to open a file: %s. %s:%d\n",
+				fpath, __FILE__, __LINE__);
 		free(EB);
 		return errno;
 	}
 
 	const double tB = ((double)nt-0.5)*DT;
 	if (write(fdB, &tB, sizeof(double)) == -1) {
+		fprintf(stderr, "Failed to write to a file: %s. %s:%d\n",
+				fpath, __FILE__, __LINE__);
 		close(fdB);
 		free(EB);
 		return errno;
@@ -50,19 +55,24 @@ int output(const double *Ep, const double *Eq, const double *Er,
 	// Output electric field
 
 	if (sprintf(fpath, "%s/E%08d.bin", DIR_OUT, nt) == EOF) {
-		fprintf(stderr, "Path %s/E%08d.bin is too long. %s:%d\n", DIR_OUT, nt, __FILE__, __LINE__);
+		fprintf(stderr, "Path %s/E%08d.bin is too long. %s:%d\n",
+				DIR_OUT, nt, __FILE__, __LINE__);
 		free(EB);
 		return ENAMETOOLONG;
 	}
 
 	const int fdE = open(fpath, O_WRONLY | O_CREAT);
 	if (fdE == -1) {
+		fprintf(stderr, "Failed to open a file: %s. %s:%d\n",
+						fpath, __FILE__, __LINE__);
 		free(EB);
 		return errno;
 	}
 
 	const double tE = ((double)nt*DT);
 	if (write(fdE, &tE, sizeof(double)) == -1) {
+		fprintf(stderr, "Failed to write to a file: %s. %s:%d\n",
+				fpath, __FILE__, __LINE__);
 		close(fdE);
 		free(EB);
 		return errno;
