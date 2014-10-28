@@ -7,7 +7,7 @@
 #include "my_coordinate.h"
 
 // Reset the components to viewing from d=0
-template <int d> static inline void swap(double *p, double *q, double *r)
+template <int d, class T> static inline void swap(T *p, T *q, T *r)
 {
 	double tmp;
 
@@ -66,16 +66,37 @@ double covariant_basic_vector(double p, double q, double r)
 	}
 }
 
-template <int c, int d>
-double length_of_covariant_basic_vector(double p, double q, double r)
+template <int ci, int cj, int d>
+static inline double covariant_metric_tensor(double p, double q, double r)
 {
 	swap<d>(&p, &q, &r);
 
-	const double dx = covariant_basic_vector<0, c, 0>(p, q, r);
-	const double dy = covariant_basic_vector<1, c, 0>(p, q, r);
-	const double dz = covariant_basic_vector<2, c, 0>(p, q, r);
+	if (ci == cj) {
+		const double v0 = covariant_basic_vector<0, ci, 0>(p, q, r);
+		const double v1 = covariant_basic_vector<1, ci, 0>(p, q, r);
+		const double v2 = covariant_basic_vector<2, ci, 0>(p, q, r);
+		return v0*v0 + v1*v1 + v2*v2;
+	}
 
-	return sqrt(dx*dx + dy*dy + dz*dz);
+	return covariant_basic_vector<0, ci, 0>(p, q, r) *
+	       covariant_basic_vector<0, cj, 0>(p, q, r) +
+	       covariant_basic_vector<1, ci, 0>(p, q, r) *
+	       covariant_basic_vector<1, cj, 0>(p, q, r) +
+	       covariant_basic_vector<2, ci, 0>(p, q, r) *
+	       covariant_basic_vector<3, cj, 0>(p, q, r);
+}
+
+template <int c, int d>
+double length_of_covariant_basic_vector(double p, double q, double r)
+{
+	return sqrt(covariant_metric_tensor<c, c, d>(p, q, r));
+}
+
+template <int cx, int cp, int d>
+double unit_covariant_basic_vector(double p, double q, double r)
+{
+	return covariant_basic_vector<cx, cp, d>(p, q, r)/
+			length_of_covariant_basic_vector<cp, d>(p, q, r);
 }
 
 static inline double jacobian(double p, double q, double r)
@@ -153,7 +174,7 @@ static inline double dr_dz(double p, double q, double r)
 			dx_dq(p, q, r)*dy_dp(p, q, r))/jacobian(p, q, r);
 }
 
-template <int cp, int cx, int d>
+template <int cx, int cp, int d>
 double contravariant_basic_vector(double p, double q, double r)
 {
 	swap<d>(&p, &q, &r);
@@ -168,6 +189,33 @@ double contravariant_basic_vector(double p, double q, double r)
 	case 7: return dr_dy(p, q, r);
 	case 8: return dr_dz(p, q, r);
 	}
+}
+
+template <int ci, int cj, int d>
+static inline double contravariant_metric_tensor(double p, double q, double r)
+{
+	swap<d>(&p, &q, &r);
+
+	if (ci == cj) {
+		const double v0 = contravariant_basic_vector<0, ci, 0>(p, q, r);
+		const double v1 = contravariant_basic_vector<1, ci, 0>(p, q, r);
+		const double v2 = contravariant_basic_vector<2, ci, 0>(p, q, r);
+		return v0*v0 + v1*v1 + v2*v2;
+	}
+
+	return contravariant_basic_vector<0, ci, 0>(p, q, r) *
+	       contravariant_basic_vector<0, cj, 0>(p, q, r) +
+	       contravariant_basic_vector<1, ci, 0>(p, q, r) *
+	       contravariant_basic_vector<1, cj, 0>(p, q, r) +
+	       contravariant_basic_vector<2, ci, 0>(p, q, r) *
+	       contravariant_basic_vector<3, cj, 0>(p, q, r);
+}
+
+template <int cx, int cp, int d>
+double unit_contravariant_basic_vector(double p, double q, double r)
+{
+	return covariant_basic_vector<cx, cp, d>(p, q, r)/
+			sqrt(contravariant_metric_tensor<cp, cp, d>(p, q, r));
 }
 
 // p, q, r -> dx/dP
