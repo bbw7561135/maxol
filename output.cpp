@@ -126,7 +126,8 @@ int output(const double *Ep, const double *Eq, const double *Er,
 	char fpath[1024];
 	int fd;
 	int _errno;
-	double t;
+	int asize[] = {NP, NQ, NR};
+	float t;
 
 	// Output electric field
 
@@ -137,28 +138,30 @@ int output(const double *Ep, const double *Eq, const double *Er,
 		return ENAMETOOLONG;
 	}
 
-	fd = open(fpath, O_WRONLY | O_CREAT,
-			S_IFREG | S_IRUSR | S_IRGRP | S_IROTH);
-	if (fd == -1)
+	if ((fd = open(fpath, O_WRONLY | O_CREAT,
+			S_IFREG | S_IRUSR | S_IRGRP | S_IROTH)) == -1)
 		goto open_err;
 
-	t = ((double)nt*DT);
-	if (write(fd, &t, sizeof(double)) == -1)
+	if (write(fd, asize, 3*sizeof(int)) == -1)
+		goto write_err;
+
+	t = ((float)nt*DT);
+	if (write(fd, &t, sizeof(float)) == -1)
 		goto write_err;
 
 	// for x
 	get_othnomal_component_electric<0, NP, NQ, NR>(EB, Ep, Eq, Er);
-	if (write(fd, &EB, sizeof(float)*NP*NQ*NR) == -1)
+	if (write(fd, EB, sizeof(float)*NP*NQ*NR) == -1)
 		goto write_err;
 
 	// for y
 	get_othnomal_component_electric<1, NQ, NR, NP>(EB, Eq, Er, Ep);
-	if (write(fd, &EB, sizeof(float)*NP*NQ*NR) == -1)
+	if (write(fd, EB, sizeof(float)*NP*NQ*NR) == -1)
 		goto write_err;
 
 	// for z
 	get_othnomal_component_electric<2, NR, NP, NQ>(EB, Er, Ep, Eq);
-	if (write(fd, &EB, sizeof(float)*NP*NQ*NR) == -1)
+	if (write(fd, EB, sizeof(float)*NP*NQ*NR) == -1)
 		goto write_err;
 
 	close(fd);
@@ -172,28 +175,30 @@ int output(const double *Ep, const double *Eq, const double *Er,
 		return ENAMETOOLONG;
 	}
 
-	fd = open(fpath, O_WRONLY | O_CREAT,
-			S_IFREG | S_IRUSR | S_IRGRP | S_IROTH);
-	if (fd == -1)
+	if ((fd = open(fpath, O_WRONLY | O_CREAT,
+			S_IFREG | S_IRUSR | S_IRGRP | S_IROTH)) == -1)
 		goto open_err;
 
-	t = ((double)nt-0.5)*DT;
-	if (write(fd, &t, sizeof(double)) == -1)
+	if (write(fd, asize, 3*sizeof(int)) == -1)
+		goto write_err;
+
+	t = ((float)nt-0.5)*DT;
+	if (write(fd, &t, sizeof(float)) == -1)
 		goto write_err;
 
 	// for x
 	get_othnomal_component_magnetic<0, NP, NQ, NR>(EB, BP, BQ, BR);
-	if (write(fd, &EB, sizeof(float)*NP*NQ*NR) == -1)
+	if (write(fd, EB, sizeof(float)*NP*NQ*NR) == -1)
 		goto write_err;
 
 	// for y
 	get_othnomal_component_magnetic<1, NQ, NR, NP>(EB, BQ, BR, BP);
-	if (write(fd, &EB, sizeof(float)*NP*NQ*NR) == -1)
+	if (write(fd, EB, sizeof(float)*NP*NQ*NR) == -1)
 		goto write_err;
 
 	// for z
 	get_othnomal_component_magnetic<2, NR, NP, NQ>(EB, BR, BP, BQ);
-	if (write(fd, &EB, sizeof(float)*NP*NQ*NR) == -1)
+	if (write(fd, EB, sizeof(float)*NP*NQ*NR) == -1)
 		goto write_err;
 
 	close(fd);

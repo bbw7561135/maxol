@@ -1,11 +1,11 @@
 #ifndef COMP_PARAM_H_
 #define COMP_PARAM_H_
 
-#define NP 4
+#define NP 16
 #define NQ 8
-#define NR 16
+#define NR 4
 
-#define NT_END 0
+#define NT_END -1
 #define NT_OUT 1
 #define DIR_OUT "./out"
 
