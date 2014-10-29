@@ -4,12 +4,11 @@ template <int c, int N0, int N1, int N2>
 static void __set_init_cond(double *A)
 {
 	for (int i = 0; i < N0; i++)
-		for (int k = 0; k < N2; k++)
-			for (int j = 0; j < N1; j++) {
-					int l = i + N0*(j + N1*k);
-					// the smallest positive value and the biggest negative value.
-					A[l] = l%2 ? 0x0000000000000001 : 0x8000000000000001;
-				}
+	for (int k = 0; k < N2; k++)
+	for (int j = 0; j < N1; j++) {
+		int l = i + N0*(j + N1*k);
+		A[l] = 0.0;
+	}
 }
 
 void set_init_cond(double *Ep, double *Eq, double *Er,
