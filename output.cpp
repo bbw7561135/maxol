@@ -10,6 +10,17 @@
 #include "comp_param.h"
 #include "coordinate.h"
 
+// Linear-extrapolate if on boundary else linear-interpolate.
+template <int N, int NS>
+double interpolate_line(const double *A, int i, int l)
+{
+	switch (i) {
+	case 0:   return   1.5*A[l+NS] - 0.5*A[l+2*NS];
+	case N-1: return - 0.5*A[l-NS] + 1.5*A[l];
+	default:  return 0.5*(A[l] + A[l+NS]);
+	}
+}
+
 template <int d, int N0, int N1, int N2>
 void get_othnomal_component_electric(
 		float *E, const double *E0, const double *E1, const double *E2)
@@ -17,27 +28,13 @@ void get_othnomal_component_electric(
 	for (int k = 0; k < N2; k++)
 	for (int j = 0; j < N1; j++)
 	for (int i = 0; i < N0; i++) {
-		const int l0 = j   + N1*(k + N2*(i-1));
-		const int l1 = k   + N2*(i + N0*(j-1));
-		const int l2 = i   + N0*(j + N1*(k-1));
+		const int l0 = j + N1*(k + N2*(i-1));
+		const int l1 = k + N2*(i + N0*(j-1));
+		const int l2 = i + N0*(j + N1*(k-1));
 
-		// Linear-extrapolate if on boundary else linear-interpolate.
-		double e0, e1, e2;
-		switch (i) {
-		case 0:    e0 =   1.5*E0[l0+N1*N2] - 0.5*E0[l0+2*N1*N2]; break;
-		case N0-1: e0 = - 0.5*E0[l0-N1*N2] + 1.5*E0[l0];         break;
-		default:   e0 = 0.5 * (E0[l0] + E0[l0+N1*N2]);
-		}
-		switch (j) {
-		case 0:    e1 =   1.5*E1[l1+N2*N0] - 0.5*E1[l1+2*N2*N0]; break;
-		case N1-1: e1 = - 0.5*E1[l1-N2*N0] + 1.5*E1[l1];         break;
-		default:   e1 = 0.5 * (E1[l1] + E1[l1+N2*N0]);
-		}
-		switch (k) {
-		case 0:    e2 =   1.5*E2[l2+N0*N1] - 0.5*E1[l2+2*N0*N1]; break;
-		case N2-1: e2 = - 0.5*E2[l2-N0*N1] + 1.5*E2[l2];         break;
-		default:   e2 = 0.5 * (E2[l2] + E2[l2+N0*N1]);
-		}
+		const double e0 = interpolate_line<N0, N1*N2>(E0, i, l0);
+		const double e1 = interpolate_line<N1, N2*N0>(E1, j, l1);
+		const double e2 = interpolate_line<N2, N0*N1>(E2, k, l2);
 
 		int _i = i, _j = j, _k = k;
 		swap<d>(&_i, &_j, &_k);
@@ -53,6 +50,13 @@ void get_othnomal_component_electric(
 	}
 }
 
+// Linear-extrapolate if on boundary else linear-interpolate.
+template <int N1, int N2>
+double interpolate_plane(const double *E, int i, int j, int l)
+{
+	// TODO
+}
+
 template <int d, int N0, int N1, int N2>
 void get_othnomal_component_magnetic(
 		float *B, const double *B0, const double *B1, const double *B2)
@@ -64,38 +68,9 @@ void get_othnomal_component_magnetic(
 		const int l1 = k-1 + (N2-1)*(i-1 + (N0-1)*j);
 		const int l2 = i-1 + (N0-1)*(j-1 + (N1-1)*k);
 
-		// Linear-extrapolate if on boundary else linear-interpolate.
-		double b0, b1, b2;
-		switch (i) {
-		case 0:
-			b0 = 1.5*B0[l0+(N1-1)*(N2-1)] - 0.5*B0[l0+2*(N1-1)*(N2-1)];
-			break;
-		case N0-1:
-			b0 = - 0.5*B0[l0-(N1-1)*(N2-1)] + 1.5*B0[l0];
-			break;
-		default:
-			b0 = 0.5*(B0[l0] + B0[l0+(N1-1)*(N2-1)]);
-		}
-		switch (j) {
-		case 0:
-			b1 = 1.5*B1[l1+(N2-1)*(N0-1)] - 0.5*B1[l1+2*(N2-1)*(N0-1)];
-			break;
-		case N1-1:
-			b1 = - 0.5*B1[l1-(N2-1)*(N0-1)] + 1.5*B1[l1];
-			break;
-		default:
-			b1 = 0.5 * (B1[l1] + B1[l1+(N2-1)*(N0-1)]);
-		}
-		switch (k) {
-		case 0:
-			b2 = 1.5*B2[l2+(N0-1)*(N1-1)] - 0.5*B1[l2+2*(N0-1)*(N1-1)];
-			break;
-		case N2-1:
-			b2 = - 0.5*B2[l2-(N0-1)*(N1-1)] + 1.5*B2[l2];
-			break;
-		default:
-			b2 = 0.5 * (B2[l2] + B2[l2+(N0-1)*(N1-1)]);
-		}
+		const double b0 = interpolate_plane<N1, N2>(B0, i, l0);
+		const double b1 = interpolate_plane<N1, N2>(B1, j, l1);
+		const double b2 = interpolate_plane<N1, N2>(B2, k, l2);
 
 		int _i = i, _j = j, _k = k;
 		swap<d>(&_i, &_j, &_k);
