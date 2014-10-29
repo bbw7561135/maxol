@@ -17,9 +17,9 @@ void get_othnomal_component_electric(
 	for (int k = 0; k < N2; k++)
 	for (int j = 0; j < N1; j++)
 	for (int i = 0; i < N0; i++) {
-		const int l0 = i-1 + N1*(j   + N2* k);
-		const int l1 = i   + N1*(j-1 + N2* k);
-		const int l2 = i   + N1*(j   + N2*(k-1));
+		const int l0 = j   + N1*(k + N2*(i-1));
+		const int l1 = k   + N2*(i + N0*(j-1));
+		const int l2 = i   + N0*(j + N1*(k-1));
 
 		// Linear-extrapolate if on boundary else linear-interpolate.
 		double e0, e1, e2;
@@ -60,9 +60,9 @@ void get_othnomal_component_magnetic(
 	for (int k = 0; k < N2; k++)
 	for (int j = 0; j < N1; j++)
 	for (int i = 0; i < N0; i++) {
-		const int l0 = i   + N1*(j-1 + N2*(k-1));
-		const int l1 = i-1 + N1*(j-1 + N2*(k-1));
-		const int l2 = i-1 + N1*(j   + N2* k);
+		const int l0 = j-1 + (N1-1)*(k-1 + (N2-1)*i);
+		const int l1 = k-1 + (N2-1)*(i-1 + (N0-1)*j);
+		const int l2 = i-1 + (N0-1)*(j-1 + (N1-1)*k);
 
 		// Linear-extrapolate if on boundary else linear-interpolate.
 		double b0, b1, b2;

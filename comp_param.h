@@ -5,8 +5,8 @@
 #define NQ 10
 #define NR 10
 
-#define NT_END 1000
-#define NT_OUT 100
+#define NT_END 0
+#define NT_OUT 1
 #define DIR_OUT "./out"
 
 #define DT 0.01
