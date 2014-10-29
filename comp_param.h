@@ -1,9 +1,9 @@
 #ifndef COMP_PARAM_H_
 #define COMP_PARAM_H_
 
-#define NP 10
-#define NQ 10
-#define NR 10
+#define NP 4
+#define NQ 8
+#define NR 16
 
 #define NT_END 0
 #define NT_OUT 1

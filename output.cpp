@@ -137,7 +137,8 @@ int output(const double *Ep, const double *Eq, const double *Er,
 		return ENAMETOOLONG;
 	}
 
-	fd = open(fpath, O_WRONLY | O_CREAT);
+	fd = open(fpath, O_WRONLY | O_CREAT,
+			S_IFREG | S_IRUSR | S_IRGRP | S_IROTH);
 	if (fd == -1)
 		goto open_err;
 
@@ -171,7 +172,8 @@ int output(const double *Ep, const double *Eq, const double *Er,
 		return ENAMETOOLONG;
 	}
 
-	fd = open(fpath, O_WRONLY | O_CREAT);
+	fd = open(fpath, O_WRONLY | O_CREAT,
+			S_IFREG | S_IRUSR | S_IRGRP | S_IROTH);
 	if (fd == -1)
 		goto open_err;
 
