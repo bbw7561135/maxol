@@ -1,8 +1,8 @@
 #ifndef COMP_PARAM_H_
 #define COMP_PARAM_H_
 
-#define NP 16
-#define NQ 8
+#define NP 6
+#define NQ 5
 #define NR 4
 
 #define NT_END -1
