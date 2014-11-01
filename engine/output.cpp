@@ -140,8 +140,6 @@ int output(const double *Ep, const double *Eq, const double *Er,
 	float *EBY = (float *)malloc(NP*NQ*NR*sizeof(float));
 	float *EBZ = (float *)malloc(NP*NQ*NR*sizeof(float));
 	if (EBX == NULL || EBY == NULL || EBZ == NULL ) {
-		fprintf(stderr, "Failed to allocate memory. %s:%d\n",
-				__FILE__, __LINE__);
 		free(EBX); free(EBY); free(EBZ);
 		return ENOMEM;
 	}
@@ -149,89 +147,86 @@ int output(const double *Ep, const double *Eq, const double *Er,
 	char fpath[1024];
 	int fd;
 	int _errno;
+	char header[] = "### Maxol ###\n";
 	int asize[] = {NP, NQ, NR};
 	float t;
 
 	// Output electric field
 
-	if (sprintf(fpath, "%s/E%08d.bin", DIR_OUT, nt) == EOF) {
-		fprintf(stderr, "Path %s/E%08d.bin is too long. %s:%d\n",
-				DIR_OUT, nt, __FILE__, __LINE__);
+	if (sprintf(fpath, "%s/%08dE", DIR_OUT, nt) == EOF) {
 		free(EBX); free(EBY); free(EBZ);
 		return ENAMETOOLONG;
 	}
 
 	if ((fd = open(fpath, O_WRONLY | O_CREAT,
 			S_IFREG | S_IRUSR | S_IRGRP | S_IROTH)) == -1)
-		goto open_err;
+		goto err;
+
+	if (write(fd, header, sizeof(header)) == -1)
+		goto err;
 
 	if (write(fd, asize, 3*sizeof(int)) == -1)
-		goto write_err;
+		goto err;
+
+	if (write(fd, &nt, sizeof(int)) == -1)
+		goto err;
 
 	t = ((float)nt*DT);
 	if (write(fd, &t, sizeof(float)) == -1)
-		goto write_err;
+		goto err;
 
 	get_othnomal_cmpo_elect(EBX, EBY, EBZ, Ep, Eq, Er);
 
 	if (write(fd, EBX, sizeof(float)*NP*NQ*NR) == -1)
-		goto write_err;
+		goto err;
 
 	if (write(fd, EBY, sizeof(float)*NP*NQ*NR) == -1)
-		goto write_err;
+		goto err;
 
 	if (write(fd, EBZ, sizeof(float)*NP*NQ*NR) == -1)
-		goto write_err;
+		goto err;
 
 	close(fd);
 
 	// Output magnetic flux densities
 
-	if (sprintf(fpath, "%s/B%08d.bin", DIR_OUT, nt) == EOF) {
-		fprintf(stderr, "Path %s/B%08d.bin is too long. %s:%d\n",
-				DIR_OUT, nt, __FILE__, __LINE__);
+	if (sprintf(fpath, "%s/%08dB", DIR_OUT, nt) == EOF) {
 		free(EBX); free(EBY); free(EBZ);
 		return ENAMETOOLONG;
 	}
 
 	if ((fd = open(fpath, O_WRONLY | O_CREAT,
 			S_IFREG | S_IRUSR | S_IRGRP | S_IROTH)) == -1)
-		goto open_err;
+		goto err;
+
+	if (write(fd, header, sizeof(header)) == -1)
+		goto err;
 
 	if (write(fd, asize, 3*sizeof(int)) == -1)
-		goto write_err;
+		goto err;
 
 	t = ((float)nt-0.5)*DT;
 	if (write(fd, &t, sizeof(float)) == -1)
-		goto write_err;
+		goto err;
 
 	get_othnomal_cmpo_magnt(EBX, EBY, EBZ, BP, BQ, BR);
 
 	if (write(fd, EBX, sizeof(float)*NP*NQ*NR) == -1)
-		goto write_err;
+		goto err;
 
 	if (write(fd, EBY, sizeof(float)*NP*NQ*NR) == -1)
-		goto write_err;
+		goto err;
 
 	if (write(fd, EBZ, sizeof(float)*NP*NQ*NR) == -1)
-		goto write_err;
+		goto err;
 
 	close(fd);
 	free(EBX); free(EBY); free(EBZ);
 	return 0;
 
-open_err:
+err:
 	_errno = errno;
-	fprintf(stderr, "Failed to open a file: %s. %s:%d\n",
-					fpath, __FILE__, __LINE__);
 	free(EBX); free(EBY); free(EBZ);
-	return _errno;
-
-write_err:
-	_errno = errno;
-	fprintf(stderr, "Failed to write to a file: %s. %s:%d\n",
-			fpath, __FILE__, __LINE__);
 	close(fd);
-	free(EBX); free(EBY); free(EBZ);
 	return _errno;
 }

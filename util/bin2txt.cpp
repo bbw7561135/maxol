@@ -16,7 +16,7 @@
 int main(int argc, char **argv)
 {
 	if (argc < 2) {
-		fprintf(stderr, "Arguments are few.\n");
+		fprintf(stderr, "Usage: bin2txt FILEPATH\n");
 		return 1;
 	}
 
@@ -28,13 +28,28 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
+	char header[] = "### Maxol ###\n";
+	char buf[sizeof(header)];
 	int size[3];
 	int np, nq, nr;
+	int nt;
 	float time;
 	float *ax = NULL, *ay = NULL, *az = NULL;
 	int _errno = 0;
 
-	if (read(fd, size, 3*sizeof(int)) != (ssize_t)(3*sizeof(int))) {
+	// Check file header
+	if (read(fd, buf, sizeof(header)) != sizeof(header)) {
+		_errno = errno;
+		goto read_err;
+	}
+
+	if (strcmp(buf, header)) {
+		_errno = EILSEQ;
+		goto read_err;
+	}
+
+	// Check size of array
+	if (read(fd, size, 3*sizeof(int)) != 3*sizeof(int)) {
 		_errno = errno;
 		goto read_err;
 	}
@@ -43,12 +58,18 @@ int main(int argc, char **argv)
 	nq = size[1];
 	nr = size[2];
 
-	if (read(fd, &time, sizeof(float)) != (ssize_t)sizeof(float)) {
+	// Read time information
+	if (read(fd, &nt, sizeof(int)) != sizeof(int)) {
 		_errno = errno;
 		goto read_err;
 	}
 
-	fprintf(stdout, "#time= %E\n", time);
+	if (read(fd, &time, sizeof(float)) != sizeof(float)) {
+		_errno = errno;
+		goto read_err;
+	}
+
+	fprintf(stdout, "%s# nt= %d, time= %E\n", header, nt, time);
 
 	ax = (float *)malloc(np*nq*nr*sizeof(float));
 	ay = (float *)malloc(np*nq*nr*sizeof(float));
@@ -61,24 +82,23 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	if (read(fd, ax, np*nq*nr*sizeof(float)) !=
-			(ssize_t)(np*nq*nr*sizeof(float))) {
+	// Read main data
+	if (read(fd, ax, np*nq*nr*sizeof(float)) != np*nq*nr*sizeof(float)) {
 		_errno = errno;
 		goto read_err;
 	}
 
-	if (read(fd, ay, np*nq*nr*sizeof(float)) !=
-			(ssize_t)(np*nq*nr*sizeof(float))) {
+	if (read(fd, ay, np*nq*nr*sizeof(float)) != np*nq*nr*sizeof(float)) {
 		_errno = errno;
 		goto read_err;
 	}
 
-	if (read(fd, az, np*nq*nr*sizeof(float)) !=
-			(ssize_t)(np*nq*nr*sizeof(float))) {
+	if (read(fd, az, np*nq*nr*sizeof(float)) != np*nq*nr*sizeof(float)) {
 		_errno = errno;
 		goto read_err;
 	}
 
+	// Output text
 	fprintf(stdout,
 			"p	q	r	x	y	z	x_cmpo	y_cmpo	z_cmpo\n");
 
@@ -97,11 +117,14 @@ int main(int argc, char **argv)
 
 	close(fd);
 	free(ax); free(ay), free(az);
+
 	return 0;
 
 read_err:
 	close(fd);
 	free(ax); free(ay), free(az);
-	fprintf(stderr, "Failed to read from %s (%s)\n", path, strerror(_errno));
+	fprintf(stderr, "Failed to read from %s (%s)\n",
+			path, strerror(_errno ? _errno : EILSEQ));
+
 	return 1;
 }

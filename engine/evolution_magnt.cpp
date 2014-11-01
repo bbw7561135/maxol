@@ -103,6 +103,7 @@ static void __evolute_magnt(double *B, const double *E1, const double *E2)
 		for (int j = 0; j < N1-1; j++) {
 			const double p1 = (double)j + 0.5;
 
+#if 0 /* Calculation with jacobian is more simple */
 			// components of contravariant basic vectors along surface element
 			const double dx_dP1 =
 				normalized_contravariant_basic_vector<0, 1, c>(p0, p1, p2);
@@ -119,12 +120,15 @@ static void __evolute_magnt(double *B, const double *E1, const double *E2)
 				normalized_contravariant_basic_vector<2, 2, c>(p0, p1, p2);
 
 			// cross product vector
-			const double n0 = dy_dP1*dz_dP2 - dy_dP2*dz_dP1;
-			const double n1 = dz_dP1*dx_dP2 - dz_dP2*dx_dP1;
-			const double n2 = dx_dP1*dy_dP2 - dx_dP2*dy_dP1;
+			const double n0 = dy_dP1 * dz_dP2 - dy_dP2 * dz_dP1;
+			const double n1 = dz_dP1 * dx_dP2 - dz_dP2 * dx_dP1;
+			const double n2 = dx_dP1 * dy_dP2 - dx_dP2 * dy_dP1;
 
 			// area of the surface element
 			const double dS = sqrt(n0*n0 + n1*n1 + n2*n2);
+#endif
+			const double dS = jacobian<c>(p0, p1, p2) *
+					len_of_covariant_basic_vector<c, c>(p0, p1, p2);
 			assert(dS != 0.0);
 
 			// length of the edge (i,j',k'-1/2)
@@ -154,7 +158,7 @@ static void __evolute_magnt(double *B, const double *E1, const double *E2)
 			intD = E2[lD]*dtD;
 
 			// contour integral of electric field around surface element
-			const double oint = - intA + intB - intC + intD;
+			const double oint = - intA + intB - intC +  intD;
 
 			// position of B(i,j',k')
 			const int l = j + N1*(k + N2*i);

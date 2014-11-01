@@ -1,9 +1,12 @@
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
 
 #include "coordinate.h"
 #include "../config/comp_param.h"
 #include "../config/phys_param.h"
+
+// TODO: To fix some bug (buffer overrun?)
 
 /*
  * I integrate electric field in a surface element like ###;
@@ -60,32 +63,29 @@ static void __evolute_elect(double *E, const double *B1, const double *B2)
 #ifdef _OPENMP
 #pragma omp for
 #endif
-	// I extract for-loop for vectorization.
-	// I don't extract inner loop because I reuse a value: intD.
+	// Extract for-loop for vectorization.
+	// Don't extract inner loop because a value intD is reused.
 	// for i: 0 ~ N0-2, for k: 1 ~ N2-2
 	for (int ik = 0; ik < (N2-2)*(N0-1); ik++) {
 		const int i = ik / (N2-2);
 		const int k = ik % (N2-2) + 1;
 
 		// (p0, p1, p2) is the center of the surface element.
+		// p1 is declared after.
 		const double p0 = (double)i + 0.5;
 		const double p2 = (double)k;
 
-		// Calculate intD previously
-		// because we cannot reuse it at the first loop.
-		double intD;
-		{
-			// length of the edge (i',3/2,k)
-			const double dtD =
-					len_of_covariant_basic_vector<2, c>(p0, 1.5, p2);
-			const int lD = i + (N0-1)*(1 + (N1-1)*k);
-			intD = B2[lD]*dtD;
-		}
+		// Calculate intD previously because we cannot reuse it at the first loop.
+
+		// length of the edge (i',3/2,k)
+		const double dtD = len_of_covariant_basic_vector<2, c>(p0, 1.5, p2);
+		const int lD = i + (N0-1)*(1 + (N1-1)*k);
+		double intD = B2[lD]*dtD;
 
 		for (int j = 1; j < N1-1; j++) {
 			const double p1 = (double)j;
 
-			// XXX: area of the surface element can be calculated by Jacobian easily
+#if 0 /* Calculation with jacobian is more simple */
 			// components of covariant basic vectors along surface element
 			const double dx_dp1 = covariant_basic_vector<0, 1, c>(p0, p1, p2);
 			const double dy_dp1 = covariant_basic_vector<1, 1, c>(p0, p1, p2);
@@ -96,12 +96,15 @@ static void __evolute_elect(double *E, const double *B1, const double *B2)
 			const double dz_dp2 = covariant_basic_vector<2, 2, c>(p0, p1, p2);
 
 			// cross product vector
-			const double n0 = dy_dp1*dz_dp2 - dy_dp2*dz_dp1;
-			const double n1 = dz_dp1*dx_dp2 - dz_dp2*dx_dp1;
-			const double n2 = dx_dp1*dy_dp2 - dx_dp2*dy_dp1;
+			const double n0 = dy_dp1 * dz_dp2 - dy_dp2 * dz_dp1;
+			const double n1 = dz_dp1 * dx_dp2 - dz_dp2 * dx_dp1;
+			const double n2 = dx_dp1 * dy_dp2 - dx_dp2 * dy_dp1;
 
 			// area of the surface element
 			const double dS = sqrt(n0*n0 + n1*n1 + n2*n2);
+#endif
+			const double dS = jacobian<c>(p0, p1, p2) *
+						len_of_contravariant_basic_vector<c, c>(p0, p1, p2);
 			assert(dS != 0.0);
 
 			// length of the edge (i',j,k-1/2)
