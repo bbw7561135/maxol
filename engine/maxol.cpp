@@ -16,8 +16,25 @@ static int cpu_sec(clock_t start_clk) {
 	return (int)((clock()-start_clk)/(CLOCKS_PER_SEC));
 }
 
+double dt;
+
 int main(int argc, char **argv)
 {
+	if (argc != 3) {
+		fprintf(stderr, "Usage: maxol NT_END NT_OUT\n");
+		return 1;
+	}
+
+	int nt_end = strtol(argv[1], NULL, 10);
+	int nt_out = strtol(argv[2], NULL, 10);
+
+	if (nt_end == 0 || nt_out == 0) {
+		fprintf(stderr, "Arguments must be non-zero integers\n");
+		return 1;
+	}
+
+	dt = DT;
+
 	fprintf(stdout, "### Maxol ###\n");
 
 	/*
@@ -116,7 +133,7 @@ int main(int argc, char **argv)
 	fprintf(stdout, "%d	%d	%f\n", cpu_sec(start_clk), 0, 0.0);
 
 	// Main loop
-	for (int nt = 1; nt <= NT_END; nt++) {
+	for (int nt = 1; nt <= nt_end; nt++) {
 		/*
 		 * For time evolution, I use leap-frog method.
 		 * Thus, B is at step of nt - 0.5
@@ -131,7 +148,7 @@ int main(int argc, char **argv)
 		bound_cond_elect(Ep, Eq, Er, (double)nt*DT);
 
 		// Save data
-		if (nt%NT_OUT == 0) {
+		if (nt % nt_out == 0) {
 			int err = output(Ep, Eq, Er, BP, BQ, BR, nt);
 			if (err) {
 				fprintf(stderr, "Failed to save a data. %s:%d (%s)\n",

@@ -8,6 +8,8 @@
 
 // TODO: To fix some bug (buffer overrun?)
 
+extern double dt;
+
 /*
  * I integrate electric field in a surface element like ###;
  * and countour-integrate magnetic flux density along the edge of it.
@@ -26,19 +28,19 @@
  *
  * As evoluting E(i',j,k), definition of variable is below.
  *
- *                      dtA
+ *                      lenA
  *                 <----------->
  *                       B1(i',j,k-1/2)
  *                       +---->
  *           ^     +-----------+     ^
  *           |     |           |     |
- *        dtC|    +|    dS     |+    |dtD
+ *       lenC|    +|    dS     |+    |lenD
  *           |    ||           ||    |
  *           v    |+-----------+|    v
  * B2(i',j-1/2,k) v      +----> v B2(i',j+1/2,k)
  *                       B1(i',j,k+1/2)
  *                 <----------->
- *                      dtB
+ *                      lenB
  *
  * Range of (i',j,k) is
  *
@@ -78,9 +80,9 @@ static void __evolute_elect(double *E, const double *B1, const double *B2)
 		// Calculate intD previously because we cannot reuse it at the first loop.
 
 		// length of the edge (i',3/2,k)
-		const double dtD = len_of_covariant_basic_vector<2, c>(p0, 1.5, p2);
+		const double lenD = len_of_covariant_basic_vector<2, c>(p0, 1.5, p2);
 		const int lD = i + (N0-1)*(1 + (N1-1)*k);
-		double intD = B2[lD]*dtD;
+		double intD = B2[lD]*lenD;
 
 		for (int j = 1; j < N1-1; j++) {
 			const double p1 = (double)j;
@@ -108,13 +110,13 @@ static void __evolute_elect(double *E, const double *B1, const double *B2)
 			assert(dS != 0.0);
 
 			// length of the edge (i',j,k-1/2)
-			const double dtA =
+			const double lenA =
 					len_of_covariant_basic_vector<1, c>(p0, p1, p2-0.5);
 			// length of the edge (i',j,k+1/2)
-			const double dtB =
+			const double lenB =
 					len_of_covariant_basic_vector<1, c>(p0, p1, p2+0.5);
 			// length of the edge (i',j+1/2,k)
-			const double dtD =
+			const double lenD =
 					len_of_covariant_basic_vector<2, c>(p0, p1+0.5, p2);
 
 			// position of B1(i',j,k-1/2)
@@ -125,10 +127,10 @@ static void __evolute_elect(double *E, const double *B1, const double *B2)
 			const int lD = i + (N0-1)*(j + (N1-1)*k);
 
 			// integral of magnetic flux density along each edge
-			const double intA = B1[lA]*dtA;
-			const double intB = B1[lB]*dtB;
+			const double intA = B1[lA]*lenA;
+			const double intB = B1[lB]*lenB;
 			const double intC = intD; // reuse from previous loop
-			intD = B2[lD]*dtD;
+			intD = B2[lD]*lenD;
 
 			// contour integral of magnetic flux density around surface element
 			const double oint = - intA + intB - intC + intD;
@@ -136,7 +138,7 @@ static void __evolute_elect(double *E, const double *B1, const double *B2)
 			// position of E(i',j,k)
 			const int l = j + N1*(k + N2*i);
 			// Ampère's circuital law. Omitting electric current term.
-			E[l] += DT/(permeability*permittivity)*oint/dS;
+			E[l] += 1.0/(permeability*permittivity)*dt*oint/dS;
 		}
 	}
 }

@@ -144,6 +144,11 @@ int output(const double *Ep, const double *Eq, const double *Er,
 		return ENOMEM;
 	}
 
+	char *outpath = getenv("MAXOL_OUT_PATH");
+	if (outpath == NULL) {
+		outpath = ".";
+	}
+
 	char fpath[1024];
 	int fd;
 	int _errno;
@@ -153,7 +158,7 @@ int output(const double *Ep, const double *Eq, const double *Er,
 
 	// Output electric field
 
-	if (sprintf(fpath, "%s/%08dE", DIR_OUT, nt) == EOF) {
+	if (sprintf(fpath, "%s/%08dE", outpath, nt) == EOF) {
 		free(EBX); free(EBY); free(EBZ);
 		return ENAMETOOLONG;
 	}
@@ -190,7 +195,7 @@ int output(const double *Ep, const double *Eq, const double *Er,
 
 	// Output magnetic flux densities
 
-	if (sprintf(fpath, "%s/%08dB", DIR_OUT, nt) == EOF) {
+	if (sprintf(fpath, "%s/%08dB", outpath, nt) == EOF) {
 		free(EBX); free(EBY); free(EBZ);
 		return ENAMETOOLONG;
 	}

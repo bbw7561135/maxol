@@ -5,6 +5,8 @@
 #include "../config/comp_param.h"
 #include "../config/phys_param.h"
 
+extern double dt;
+
 /*
  * I integrate magnetic flux density in a surface element like the square
  * EFGH; and countour-integrate electric field along the edge of it.
