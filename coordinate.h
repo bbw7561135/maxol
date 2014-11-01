@@ -16,15 +16,15 @@ template <int d, class T> static inline void swap(T *p, T *q, T *r)
 		break;
 	case 1:
 		tmp = *p;
-		*p = *q;
-		*q = *r;
-		*r = tmp;
-		break;
-	case 2:
-		tmp = *p;
 		*p = *r;
 		*r = *q;
 		*q = tmp;
+		break;
+	case 2:
+		tmp = *p;
+		*p = *q;
+		*q = *r;
+		*r = tmp;
 		break;
 	}
 }
@@ -38,16 +38,17 @@ template <int d, class T> static inline void swap(T *p, T *q, T *r)
  * d means viewing direction. (p, q, r) are components when viewing from d.
  * If d == 0, the view is normal.
  */
-template <int c, int d> double othnormal(double p, double q, double r)
+template <int c, int d, class T> double othnormal_position(T p, T q, T r)
 {
 	swap<d>(&p, &q, &r);
 	switch (c%3) {
-	case 0: return x(p, q, r);
-	case 1: return y(p, q, r);
-	case 2: return z(p, q, r);
+	case 0: return x((double)p, (double)q, (double)r);
+	case 1: return y((double)p, (double)q, (double)r);
+	case 2: return z((double)p, (double)q, (double)r);
 	}
 }
 
+// also called jacobi matrix
 // XXX: memoize
 template <int cx, int cp, int d>
 double covariant_basic_vector(double p, double q, double r)
@@ -86,17 +87,11 @@ static inline double covariant_metric_tensor(double p, double q, double r)
 	       covariant_basic_vector<3, cj, 0>(p, q, r);
 }
 
+// The length of the "c" component of covariant basic vector.
 template <int c, int d>
-double length_of_covariant_basic_vector(double p, double q, double r)
+double len_of_covariant_basic_vector(double p, double q, double r)
 {
 	return sqrt(covariant_metric_tensor<c, c, d>(p, q, r));
-}
-
-template <int cx, int cp, int d>
-double unit_covariant_basic_vector(double p, double q, double r)
-{
-	return covariant_basic_vector<cx, cp, d>(p, q, r)/
-			length_of_covariant_basic_vector<cp, d>(p, q, r);
 }
 
 static inline double jacobian(double p, double q, double r)
@@ -121,7 +116,7 @@ static inline double dp_dx(double p, double q, double r)
 // p, q, r -> dq/dx
 static inline double dq_dx(double p, double q, double r)
 {
-	return (dy_dr(p, q, r)*dz_dq(p, q, r) -
+	return (dy_dr(p, q, r)*dz_dp(p, q, r) -
 			dy_dp(p, q, r)*dz_dr(p, q, r))/jacobian(p, q, r);
 }
 
@@ -142,7 +137,7 @@ static inline double dp_dy(double p, double q, double r)
 // p, q, r -> dq/dy
 static inline double dq_dy(double p, double q, double r)
 {
-	return (dz_dr(p, q, r)*dx_dq(p, q, r) -
+	return (dz_dr(p, q, r)*dx_dp(p, q, r) -
 			dz_dp(p, q, r)*dx_dr(p, q, r))/jacobian(p, q, r);
 }
 
@@ -163,7 +158,7 @@ static inline double dp_dz(double p, double q, double r)
 // p, q, r -> dq/dz
 static inline double dq_dz(double p, double q, double r)
 {
-	return (dx_dr(p, q, r)*dy_dq(p, q, r) -
+	return (dx_dr(p, q, r)*dy_dp(p, q, r) -
 			dx_dp(p, q, r)*dy_dr(p, q, r))/jacobian(p, q, r);
 }
 
@@ -174,6 +169,7 @@ static inline double dr_dz(double p, double q, double r)
 			dx_dq(p, q, r)*dy_dp(p, q, r))/jacobian(p, q, r);
 }
 
+// also called inverse jacobi matrix
 template <int cx, int cp, int d>
 double contravariant_basic_vector(double p, double q, double r)
 {
@@ -211,11 +207,11 @@ static inline double contravariant_metric_tensor(double p, double q, double r)
 	       contravariant_basic_vector<3, cj, 0>(p, q, r);
 }
 
-template <int cx, int cp, int d>
-double unit_contravariant_basic_vector(double p, double q, double r)
+// The length of the "c" component of contravariant basic vector.
+template <int c, int d>
+double len_of_contravariant_basic_vector(double p, double q, double r)
 {
-	return covariant_basic_vector<cx, cp, d>(p, q, r)/
-			sqrt(contravariant_metric_tensor<cp, cp, d>(p, q, r));
+	return sqrt(contravariant_metric_tensor<c, c, d>(p, q, r));
 }
 
 // p, q, r -> dx/dP
@@ -296,7 +292,7 @@ double normalized_contravariant_basic_vector(double p, double q, double r)
 }
 
 template <int c, int d>
-double length_of_normalized_contravariant_basic_vector(
+double len_of_normalized_contravariant_basic_vector(
 		double p, double q, double r)
 {
 	swap<d>(&p, &q, &r);

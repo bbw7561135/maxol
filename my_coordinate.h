@@ -10,13 +10,13 @@
 // p, q, r -> x
 static inline double x(double p, double q, double r)
 {
-	return p;
+	return p + q;
 }
 
 // p, q, r -> y
 static inline double y(double p, double q, double r)
 {
-	return q;
+	return q - p;
 }
 
 // p, q, r -> z
@@ -27,6 +27,8 @@ static inline double z(double p, double q, double r)
 
 // covariant basic vectors
 
+// x
+
 // p, q, r -> dx/dp
 static inline double dx_dp(double p, double q, double r)
 {
@@ -36,7 +38,7 @@ static inline double dx_dp(double p, double q, double r)
 // p, q, r -> dx/dq
 static inline double dx_dq(double p, double q, double r)
 {
-	return 0.0;
+	return 1.0;
 }
 
 // p, q, r -> dx/dr
@@ -45,10 +47,12 @@ static inline double dx_dr(double p, double q, double r)
 	return 0.0;
 }
 
+// y
+
 // p, q, r -> dy/dp
 static inline double dy_dp(double p, double q, double r)
 {
-	return 0.0;
+	return -1.0;
 }
 
 // p, q, r -> dy/dq
@@ -62,6 +66,8 @@ static inline double dy_dr(double p, double q, double r)
 {
 	return 0.0;
 }
+
+// z
 
 // p, q, r -> dz/dp
 static inline double dz_dp(double p, double q, double r)

@@ -72,7 +72,7 @@
  */
 
 template <int c, int N0, int N1, int N2>
-static void __evolute_magnetic(double *B, const double *E1, const double *E2)
+static void __evolute_magnt(double *B, const double *E1, const double *E2)
 {
 #ifdef _OPENMP
 #pragma omp for
@@ -94,7 +94,7 @@ static void __evolute_magnetic(double *B, const double *E1, const double *E2)
 		{
 			// length of the edge (i',1,k')
 			const double dtD =
-					length_of_normalized_contravariant_basic_vector<2, c>(
+					len_of_normalized_contravariant_basic_vector<2, c>(
 							p0, 1.5, p2);
 			const int lD = i + N0*(1 + N1*k);
 			intD = E2[lD]*dtD;
@@ -129,15 +129,15 @@ static void __evolute_magnetic(double *B, const double *E1, const double *E2)
 
 			// length of the edge (i,j',k'-1/2)
 			const double dtA =
-					length_of_normalized_contravariant_basic_vector<1, c>(
+					len_of_normalized_contravariant_basic_vector<1, c>(
 							p0, p1, p2-0.5);
 			// length of the edge (i,j',k'+1/2)
 			const double dtB =
-					length_of_normalized_contravariant_basic_vector<1, c>(
+					len_of_normalized_contravariant_basic_vector<1, c>(
 							p0, p1, p2+0.5);
 			// length of the edge (i,j'+1/2,k')
 			const double dtD =
-					length_of_normalized_contravariant_basic_vector<2, c>(
+					len_of_normalized_contravariant_basic_vector<2, c>(
 							p0, p1+0.5, p2);
 
 			// position of E1(i,j',k'-1/2)
@@ -167,7 +167,7 @@ static void __evolute_magnetic(double *B, const double *E1, const double *E2)
 /*
  * Evolute electric fields with leap-frog method following Faraday's law.
  */
-void evolute_magnetic(
+void evolute_magnt(
 		// magnetic flux densities at nt
 		double *BP, double *BQ, double *BR,
 		// electric fields at nt + 0.5
@@ -177,8 +177,8 @@ void evolute_magnetic(
 #pragma omp parallel
 #endif
 	{
-		__evolute_magnetic<0, NP, NQ, NR>(BP, Eq, Er);
-		__evolute_magnetic<1, NQ, NR, NP>(BQ, Er, Ep);
-		__evolute_magnetic<2, NR, NP, NQ>(BR, Ep, Eq);
+		__evolute_magnt<0, NP, NQ, NR>(BP, Eq, Er);
+		__evolute_magnt<1, NQ, NR, NP>(BQ, Er, Ep);
+		__evolute_magnt<2, NR, NP, NQ>(BR, Ep, Eq);
 	}
 }

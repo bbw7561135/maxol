@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "maxol.h"
 
@@ -92,13 +93,12 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-//	init_coodinate();
 	set_init_cond(Ep, Eq, Er, BP, BQ, BR);
 
 	int err = output(Ep, Eq, Er, BP, BQ, BR, /*nt=*/0);
 	if (err) {
-		fprintf(stderr, "Failed to save a data. %s:%d (%d)\n",
-				__FILE__, __LINE__, err);
+		fprintf(stderr, "Failed to save a data. %s:%d (%s)\n",
+				__FILE__, __LINE__, strerror(err));
 		return 2;
 	}
 
@@ -108,17 +108,17 @@ int main(int argc, char **argv)
 		 * For time evolution, I use leap-frog method.
 		 * Thus, B is at step of nt - 0.5
 		 */
-		evolute_magnetic(BP, BQ, BR, Ep, Eq, Er);
-		bound_cond_magnetic(BP, BQ, BR, ((double)nt-0.5)*DT);
-		evolute_electric(Ep, Eq, Er, BP, BQ, BR);
-		bound_cond_electric(Ep, Eq, Er, (double)nt*DT);
+		evolute_magnt(BP, BQ, BR, Ep, Eq, Er);
+		bound_cond_magnt(BP, BQ, BR, ((double)nt-0.5)*DT);
+		evolute_elect(Ep, Eq, Er, BP, BQ, BR);
+		bound_cond_elect(Ep, Eq, Er, (double)nt*DT);
 
 		// Save data
 		if (!nt%NT_OUT) {
 			int err = output(Ep, Eq, Er, BP, BQ, BR, nt);
 			if (err) {
-				fprintf(stderr, "Failed to save a data. %s:%d (%d)\n",
-						__FILE__, __LINE__, err);
+				fprintf(stderr, "Failed to save a data. %s:%d (%s)\n",
+						__FILE__, __LINE__, strerror(err));
 				return 2;
 			}
 		}

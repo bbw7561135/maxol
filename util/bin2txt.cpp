@@ -87,9 +87,9 @@ int main(int argc, char **argv)
 	for (int i = 0; i < np; i++) {
 		fprintf(stdout, "%d	%d	%d	%E	%E	%E	%E	%E	%E\n",
 				i, j, k,
-				othnormal<0, 0>(i, j, k),
-				othnormal<1, 0>(i, j, k),
-				othnormal<2, 0>(i, j, k),
+				othnormal_position<0, 0>(i, j, k),
+				othnormal_position<1, 0>(i, j, k),
+				othnormal_position<2, 0>(i, j, k),
 				ax[i+np*(j+nq)],
 				ay[i+np*(j+nq)],
 				az[i+np*(j+nq)]);

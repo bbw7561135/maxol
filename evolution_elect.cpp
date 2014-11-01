@@ -55,7 +55,7 @@
  *   +---+---+---+
  */
 template <int c, int N0, int N1, int N2>
-static void __evolute_electric(double *E, const double *B1, const double *B2)
+static void __evolute_elect(double *E, const double *B1, const double *B2)
 {
 #ifdef _OPENMP
 #pragma omp for
@@ -77,7 +77,7 @@ static void __evolute_electric(double *E, const double *B1, const double *B2)
 		{
 			// length of the edge (i',3/2,k)
 			const double dtD =
-					length_of_covariant_basic_vector<2, c>(p0, 1.5, p2);
+					len_of_covariant_basic_vector<2, c>(p0, 1.5, p2);
 			const int lD = i + (N0-1)*(1 + (N1-1)*k);
 			intD = B2[lD]*dtD;
 		}
@@ -85,6 +85,7 @@ static void __evolute_electric(double *E, const double *B1, const double *B2)
 		for (int j = 1; j < N1-1; j++) {
 			const double p1 = (double)j;
 
+			// XXX: area of the surface element can be calculated by Jacobian easily
 			// components of covariant basic vectors along surface element
 			const double dx_dp1 = covariant_basic_vector<0, 1, c>(p0, p1, p2);
 			const double dy_dp1 = covariant_basic_vector<1, 1, c>(p0, p1, p2);
@@ -105,13 +106,13 @@ static void __evolute_electric(double *E, const double *B1, const double *B2)
 
 			// length of the edge (i',j,k-1/2)
 			const double dtA =
-					length_of_covariant_basic_vector<1, c>(p0, p1, p2-0.5);
+					len_of_covariant_basic_vector<1, c>(p0, p1, p2-0.5);
 			// length of the edge (i',j,k+1/2)
 			const double dtB =
-					length_of_covariant_basic_vector<1, c>(p0, p1, p2+0.5);
+					len_of_covariant_basic_vector<1, c>(p0, p1, p2+0.5);
 			// length of the edge (i',j+1/2,k)
 			const double dtD =
-					length_of_covariant_basic_vector<2, c>(p0, p1+0.5, p2);
+					len_of_covariant_basic_vector<2, c>(p0, p1+0.5, p2);
 
 			// position of B1(i',j,k-1/2)
 			const int lA = k-1 + (N2-1)*(i + (N0-1)*j);
@@ -142,7 +143,7 @@ static void __evolute_electric(double *E, const double *B1, const double *B2)
  * following Ampère's circuital law.
  * NOTICE:  Now I omit electric current term.
  */
-void evolute_electric(
+void evolute_elect(
 		// electric fields at nt
 		double *Ep, double *Eq, double *Er,
 		 // magnetic flux densities at nt + 0.5
@@ -152,8 +153,8 @@ void evolute_electric(
 #pragma omp parallel
 #endif
 	{
-		__evolute_electric<0, NP, NQ, NR>(Ep, BQ, BR);
-		__evolute_electric<1, NQ, NR, NP>(Eq, BR, BP);
-		__evolute_electric<2, NR, NP, NQ>(Er, BP, BQ);
+		__evolute_elect<0, NP, NQ, NR>(Ep, BQ, BR);
+		__evolute_elect<1, NQ, NR, NP>(Eq, BR, BP);
+		__evolute_elect<2, NR, NP, NQ>(Er, BP, BQ);
 	}
 }

@@ -1,7 +1,7 @@
 #include "comp_param.h"
 
 template <int c, int N0, int N1, int N2>
-static void __bound_cond_electric(double *E, double t)
+static void __bound_cond_elect(double *E, double t)
 {
 	// tangential components to boundary is zero
 
@@ -32,15 +32,15 @@ static void __bound_cond_electric(double *E, double t)
 	}
 }
 
-void bound_cond_electric(double *Ep, double *Eq, double *Er, double t)
+void bound_cond_elect(double *Ep, double *Eq, double *Er, double t)
 {
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
 	{
-		__bound_cond_electric<0, NP, NQ, NR>(Ep, t);
-		__bound_cond_electric<1, NQ, NR, NP>(Eq, t);
-		__bound_cond_electric<2, NR, NP, NQ>(Er, t);
+		__bound_cond_elect<0, NP, NQ, NR>(Ep, t);
+		__bound_cond_elect<1, NQ, NR, NP>(Eq, t);
+		__bound_cond_elect<2, NR, NP, NQ>(Er, t);
 	}
 }
 
@@ -51,7 +51,7 @@ void bound_cond_electric(double *Ep, double *Eq, double *Er, double t)
 // I don't know why boundary condition in magnetic field is not required.
 
 template <int c, int N0, int N1, int N2>
-static void __bound_cond_magnetic(double *B, double t)
+static void __bound_cond_magnt(double *B, double t)
 {
 	// vertical component to boundary is zero
 #ifdef _OPENMP
@@ -69,14 +69,14 @@ static void __bound_cond_magnetic(double *B, double t)
 		}
 }
 
-void bound_cond_magnetic(double *BP, double *BQ, double *BR, double t)
+void bound_cond_magnt(double *BP, double *BQ, double *BR, double t)
 {
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
 	{
-		__bound_cond_magnetic<0, NP, NQ, NR>(BP, t);
-		__bound_cond_magnetic<1, NQ, NR, NP>(BQ, t);
-		__bound_cond_magnetic<2, NR, NP, NQ>(BR, t);
+		__bound_cond_magnt<0, NP, NQ, NR>(BP, t);
+		__bound_cond_magnt<1, NQ, NR, NP>(BQ, t);
+		__bound_cond_magnt<2, NR, NP, NQ>(BR, t);
 	}
 }

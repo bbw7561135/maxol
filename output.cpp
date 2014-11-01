@@ -15,13 +15,13 @@ template <int N, int NS>
 double interpolate_line(const double *A, int i, int l)
 {
 	switch (i) {
-	case 0:   return   1.5*A[l+NS] - 0.5*A[l+2*NS];
-	case N-1: return - 0.5*A[l-NS] + 1.5*A[l];
-	default:  return 0.5*(A[l] + A[l+NS]);
+	case 0:   return   1.5 * A[l+NS] - 0.5 * A[l+2*NS];
+	case N-1: return - 0.5 * A[l-NS] + 1.5 * A[l];
+	default:  return   0.5 * A[l]    + 0.5 * A[l+NS];
 	}
 }
 
-static void get_othnomal_component_electric(
+static void get_othnomal_cmpo_elect(
 		float *EX, float *EY, float *EZ,
 		const double *EP, const double *EQ, const double *ER)
 {
@@ -32,30 +32,36 @@ static void get_othnomal_component_electric(
 		const int l1 = k + NR*(i + NP*(j-1));
 		const int l2 = i + NP*(j + NQ*(k-1));
 
-		const double e0 = interpolate_line<NP, NQ*NR>(EP, i, l0);
-		const double e1 = interpolate_line<NQ, NR*NQ>(EQ, j, l1);
-		const double e2 = interpolate_line<NR, NP*NP>(ER, k, l2);
+		const double p = (double)i;
+		const double q = (double)j;
+		const double r = (double)k;
+
+		// physical components along to the grids
+		double e0 = interpolate_line<NP, NQ*NR>(EP, i, l0);
+		double e1 = interpolate_line<NQ, NR*NP>(EQ, j, l1);
+		double e2 = interpolate_line<NR, NP*NQ>(ER, k, l2);
+
+		// Convert to unphysical component.
+		e0 /= len_of_covariant_basic_vector<0, 0>(p, q, r);
+		e1 /= len_of_covariant_basic_vector<1, 0>(p, q, r);
+		e2 /= len_of_covariant_basic_vector<2, 0>(p, q, r);
 
 		const int l = i + NP*(j + NQ*k);
 
-		const double di = (double)i;
-		const double dj = (double)j;
-		const double dk = (double)k;
-
 		EX[l] = (float)(
-				unit_covariant_basic_vector<0, 0, 0>(di, dj, dk) * e0 +
-				unit_covariant_basic_vector<0, 1, 0>(di, dj, dk) * e1 +
-				unit_covariant_basic_vector<0, 2, 0>(di, dj, dk) * e2);
+				covariant_basic_vector<0, 0, 0>(p, q, r) * e0 +
+				covariant_basic_vector<0, 1, 0>(p, q, r) * e1 +
+				covariant_basic_vector<0, 2, 0>(p, q, r) * e2);
 
 		EY[l] = (float)(
-				unit_covariant_basic_vector<1, 0, 0>(di, dj, dk) * e0 +
-				unit_covariant_basic_vector<1, 1, 0>(di, dj, dk) * e1 +
-				unit_covariant_basic_vector<1, 2, 0>(di, dj, dk) * e2);
+				covariant_basic_vector<1, 0, 0>(p, q, r) * e0 +
+				covariant_basic_vector<1, 1, 0>(p, q, r) * e1 +
+				covariant_basic_vector<1, 2, 0>(p, q, r) * e2);
 
 		EZ[l] = (float)(
-				unit_covariant_basic_vector<2, 0, 0>(di, dj, dk) * e0 +
-				unit_covariant_basic_vector<2, 1, 0>(di, dj, dk) * e1 +
-				unit_covariant_basic_vector<2, 2, 0>(di, dj, dk) * e2);
+				covariant_basic_vector<2, 0, 0>(p, q, r) * e0 +
+				covariant_basic_vector<2, 1, 0>(p, q, r) * e1 +
+				covariant_basic_vector<2, 2, 0>(p, q, r) * e2);
 	}
 }
 
@@ -77,11 +83,11 @@ double interpolate_plane(const double *A, int i, int j, int l)
 	default:
 		a = interpolate_line<N2, NS2>(A, j, l);
 		b = interpolate_line<N2, NS2>(A, j, l+NS1);
-		return 0.5*(a + b);
+		return 0.5*a + 0.5*b;
 	}
 }
 
-static void get_othnomal_component_magnetic(
+static void get_othnomal_cmpo_magnt(
 		float *BX, float *BY, float *BZ,
 		const double *BP, const double *BQ, const double *BR)
 {
@@ -92,30 +98,36 @@ static void get_othnomal_component_magnetic(
 		const int l1 = k-1 + (NR-1)*(i-1 + (NP-1)*j);
 		const int l2 = i-1 + (NP-1)*(j-1 + (NQ-1)*k);
 
-		const double b0 = interpolate_plane<NQ, NR, 1, NQ-1>(BP, j, k, l0);
-		const double b1 = interpolate_plane<NR, NP, 1, NR-1>(BQ, k, i, l1);
-		const double b2 = interpolate_plane<NP, NQ, 1, NP-1>(BR, i, j, l2);
+		const double p = (double)i;
+		const double q = (double)j;
+		const double r = (double)k;
+
+		// physical components vertical with grids
+		double b0 = interpolate_plane<NQ, NR, 1, NQ-1>(BP, j, k, l0);
+		double b1 = interpolate_plane<NR, NP, 1, NR-1>(BQ, k, i, l1);
+		double b2 = interpolate_plane<NP, NQ, 1, NP-1>(BR, i, j, l2);
+
+		// Convert to unphysical component.
+		b0 /= len_of_contravariant_basic_vector<0, 0>(p, q, r);
+		b1 /= len_of_contravariant_basic_vector<1, 0>(p, q, r);
+		b2 /= len_of_contravariant_basic_vector<2, 0>(p, q, r);
 
 		const int l = i + NP*(j + NQ*k);
 
-		const double di = (double)i;
-		const double dj = (double)j;
-		const double dk = (double)k;
-
 		BX[l] = (float)(
-				unit_contravariant_basic_vector<0, 0, 0>(di, dj, dk) * b0 +
-				unit_contravariant_basic_vector<0, 1, 0>(di, dj, dk) * b1 +
-				unit_contravariant_basic_vector<0, 2, 0>(di, dj, dk) * b2);
+				contravariant_basic_vector<0, 0, 0>(p, q, r) * b0 +
+				contravariant_basic_vector<0, 1, 0>(p, q, r) * b1 +
+				contravariant_basic_vector<0, 2, 0>(p, q, r) * b2);
 
 		BY[l] = (float)(
-				unit_contravariant_basic_vector<1, 0, 0>(di, dj, dk) * b0 +
-				unit_contravariant_basic_vector<1, 1, 0>(di, dj, dk) * b1 +
-				unit_contravariant_basic_vector<1, 2, 0>(di, dj, dk) * b2);
+				contravariant_basic_vector<1, 0, 0>(p, q, r) * b0 +
+				contravariant_basic_vector<1, 1, 0>(p, q, r) * b1 +
+				contravariant_basic_vector<1, 2, 0>(p, q, r) * b2);
 
 		BZ[l] = (float)(
-				unit_contravariant_basic_vector<2, 0, 0>(di, dj, dk) * b0 +
-				unit_contravariant_basic_vector<2, 1, 0>(di, dj, dk) * b1 +
-				unit_contravariant_basic_vector<2, 2, 0>(di, dj, dk) * b2);
+				contravariant_basic_vector<2, 0, 0>(p, q, r) * b0 +
+				contravariant_basic_vector<2, 1, 0>(p, q, r) * b1 +
+				contravariant_basic_vector<2, 2, 0>(p, q, r) * b2);
 	}
 }
 
@@ -160,7 +172,7 @@ int output(const double *Ep, const double *Eq, const double *Er,
 	if (write(fd, &t, sizeof(float)) == -1)
 		goto write_err;
 
-	get_othnomal_component_electric(EBX, EBY, EBZ, Ep, Eq, Er);
+	get_othnomal_cmpo_elect(EBX, EBY, EBZ, Ep, Eq, Er);
 
 	if (write(fd, EBX, sizeof(float)*NP*NQ*NR) == -1)
 		goto write_err;
@@ -193,7 +205,7 @@ int output(const double *Ep, const double *Eq, const double *Er,
 	if (write(fd, &t, sizeof(float)) == -1)
 		goto write_err;
 
-	get_othnomal_component_magnetic(EBX, EBY, EBZ, BP, BQ, BR);
+	get_othnomal_cmpo_magnt(EBX, EBY, EBZ, BP, BQ, BR);
 
 	if (write(fd, EBX, sizeof(float)*NP*NQ*NR) == -1)
 		goto write_err;

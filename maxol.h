@@ -7,19 +7,19 @@
 void set_init_cond(double *Ep, double *Eq, double *Er,
                    double *BP, double *BQ, double *BR);
 
-void evolute_electric(
+void evolute_elect(
 		// electric fields at nt
 		double *Ep, double *Eq, double *Er,
 		 // magnetic flux densities at nt + 0.5
 		const double *BP, const double *BQ, const double *BR);
-void evolute_magnetic(
+void evolute_magnt(
 		// magnetic flux densities at nt
 		double *BP, double *BQ, double *BR,
 		// electric fields at nt + 0.5
 		const double *Ep, const double *Eq, const double *Er);
 
-void bound_cond_electric(double *Ep, double *Eq, double *Er, double t);
-void bound_cond_magnetic(double *BP, double *BQ, double *BR, double t);
+void bound_cond_elect(double *Ep, double *Eq, double *Er, double t);
+void bound_cond_magnt(double *BP, double *BQ, double *BR, double t);
 
 int output(const double *Ep, const double *Eq, const double *Er,
            const double *BP, const double *BQ, const double *BR,
