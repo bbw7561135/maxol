@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <math.h>
 
-#include "my_coordinate.h"
+#include "../config/my_coordinate.h"
 
 // Reset the components to viewing from d=0
 template <int d, class T> static inline void swap(T *p, T *q, T *r)

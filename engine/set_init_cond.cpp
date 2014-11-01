@@ -1,9 +1,9 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "maxol.h"
-#include "my_init_cond.h"
 #include "coordinate.h"
+#include "../config/comp_param.h"
+#include "../config/my_init_cond.h"
 
 template <int c, int N0, int N1, int N2>
 static void set_init_cond_elect(double *E)

@@ -1,8 +1,8 @@
 #ifndef MAXOL_H_
 #define MAXOL_H_
 
-#include "phys_param.h"
-#include "comp_param.h"
+#include "../config/comp_param.h"
+#include "../config/phys_param.h"
 
 void set_init_cond(double *Ep, double *Eq, double *Er,
                    double *BP, double *BQ, double *BR);

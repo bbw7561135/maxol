@@ -7,8 +7,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "comp_param.h"
 #include "coordinate.h"
+#include "../config/comp_param.h"
 
 // Linear-extrapolate if on boundary else linear-interpolate.
 template <int N, int NS>

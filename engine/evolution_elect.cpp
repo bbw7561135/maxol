@@ -1,9 +1,9 @@
 #include <assert.h>
 #include <math.h>
 
-#include "comp_param.h"
 #include "coordinate.h"
-#include "phys_param.h"
+#include "../config/comp_param.h"
+#include "../config/phys_param.h"
 
 /*
  * I integrate electric field in a surface element like ###;

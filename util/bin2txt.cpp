@@ -11,7 +11,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "../coordinate.h"
+#include "../engine/coordinate.h"
 
 int main(int argc, char **argv)
 {

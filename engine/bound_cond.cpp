@@ -1,4 +1,4 @@
-#include "comp_param.h"
+#include "../config/comp_param.h"
 
 template <int c, int N0, int N1, int N2>
 static void __bound_cond_elect(double *E, double t)
