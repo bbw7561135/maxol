@@ -87,24 +87,15 @@ static void __evolute_elect(double *E, const double *B1, const double *B2)
 		for (int j = 1; j < N1-1; j++) {
 			const double p1 = (double)j;
 
-#if 0 /* Calculation with jacobian is more simple */
-			// components of covariant basic vectors along surface element
-			const double dx_dp1 = covariant_basic_vector<0, 1, c>(p0, p1, p2);
-			const double dy_dp1 = covariant_basic_vector<1, 1, c>(p0, p1, p2);
-			const double dz_dp1 = covariant_basic_vector<2, 1, c>(p0, p1, p2);
-
-			const double dx_dp2 = covariant_basic_vector<0, 2, c>(p0, p1, p2);
-			const double dy_dp2 = covariant_basic_vector<1, 2, c>(p0, p1, p2);
-			const double dz_dp2 = covariant_basic_vector<2, 2, c>(p0, p1, p2);
-
-			// cross product vector
-			const double n0 = dy_dp1 * dz_dp2 - dy_dp2 * dz_dp1;
-			const double n1 = dz_dp1 * dx_dp2 - dz_dp2 * dx_dp1;
-			const double n2 = dx_dp1 * dy_dp2 - dx_dp2 * dy_dp1;
-
-			// area of the surface element
-			const double dS = sqrt(n0*n0 + n1*n1 + n2*n2);
-#endif
+			/*
+			 * The volume equals to Jacobian.
+			 *   +-----+    ^
+			 *  / \   / \   | 1 / (length of contravariant basic vector)
+			 * +-----+   \  |
+			 *  \   +-\---+ v
+			 *   \ / dS\ /
+			 *    +-----+
+			 */
 			const double dS = jacobian<c>(p0, p1, p2) *
 						len_of_contravariant_basic_vector<c, c>(p0, p1, p2);
 			assert(dS != 0.0);
