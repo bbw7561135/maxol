@@ -125,7 +125,6 @@ int main(int argc, char **argv)
 				__FILE__, __LINE__, strerror(err));
 		return 2;
 	}
-	fprintf(stderr, "Saved to file. nt=%d\n", 0);
 
 	clock_t start_clk = clock(); // ignore err;
 

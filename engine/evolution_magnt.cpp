@@ -41,19 +41,19 @@ extern double dt;
  *
  * As evoluting BP(i,j',k'), definition of variable is below.
  *
- *                       dtA
+ *                       lenA
  *                  <----------->
  *                        E1(i,j',k'-1/2)
  *                        +---->
  *            ^     +-----------+     ^
  *            |     |           |     |
- *         dtC|    +|    dS     |+    |dtD
+ *        lenC|    +|    dS     |+    |lenD
  *            |    ||           ||    |
  *            v    |+-----------+|    v
  * E2(i,j'-1/2,k') v      +----> v E2(i,j'+1/2,k')
  *                        E1(i,j',k'+1/2)
  *                  <----------->
- *                       dtB
+ *                       lenB
  *
  * Range of (i,j',k') is
  *
@@ -95,11 +95,11 @@ static void __evolute_magnt(double *B, const double *E1, const double *E2)
 		double intD;
 		{
 			// length of the edge (i',1,k')
-			const double dtD =
+			const double lenD =
 					len_of_normalized_contravariant_basic_vector<2, c>(
 							p0, 1.5, p2);
 			const int lD = i + N0*(1 + N1*k);
-			intD = E2[lD]*dtD;
+			intD = E2[lD]*lenD;
 		}
 
 		for (int j = 0; j < N1-1; j++) {
@@ -134,15 +134,15 @@ static void __evolute_magnt(double *B, const double *E1, const double *E2)
 			assert(dS != 0.0);
 
 			// length of the edge (i,j',k'-1/2)
-			const double dtA =
+			const double lenA =
 					len_of_normalized_contravariant_basic_vector<1, c>(
 							p0, p1, p2-0.5);
 			// length of the edge (i,j',k'+1/2)
-			const double dtB =
+			const double lenB =
 					len_of_normalized_contravariant_basic_vector<1, c>(
 							p0, p1, p2+0.5);
 			// length of the edge (i,j'+1/2,k')
-			const double dtD =
+			const double lenD =
 					len_of_normalized_contravariant_basic_vector<2, c>(
 							p0, p1+0.5, p2);
 
@@ -154,10 +154,10 @@ static void __evolute_magnt(double *B, const double *E1, const double *E2)
 			const int lD = i + N0*(j + N1*k);
 
 			// integral of electric field along each edge
-			const double intA = E1[lA]*dtA;
-			const double intB = E1[lB]*dtB;
+			const double intA = E1[lA]*lenA;
+			const double intB = E1[lB]*lenB;
 			const double intC = intD; // reuse from previous loop
-			intD = E2[lD]*dtD;
+			intD = E2[lD]*lenD;
 
 			// contour integral of electric field around surface element
 			const double oint = - intA + intB - intC +  intD;
@@ -165,7 +165,7 @@ static void __evolute_magnt(double *B, const double *E1, const double *E2)
 			// position of B(i,j',k')
 			const int l = j + N1*(k + N2*i);
 			// Maxwell–Faraday equation
-			B[l] -= DT*oint/dS;
+			B[l] -= dt*oint/dS;
 		}
 	}
 }
