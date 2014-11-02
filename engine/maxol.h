@@ -20,8 +20,8 @@ void evolute_magnt(
 		// electric fields at nt + 0.5
 		const double *Ep, const double *Eq, const double *Er);
 
-void bound_cond_elect(double *Ep, double *Eq, double *Er, double t);
-void bound_cond_magnt(double *BP, double *BQ, double *BR, double t);
+void bound_cond_elect(double *Ep, double *Eq, double *Er);
+void bound_cond_magnt(double *BP, double *BQ, double *BR);
 
 int output(const double *Ep, const double *Eq, const double *Er,
            const double *BP, const double *BQ, const double *BR,

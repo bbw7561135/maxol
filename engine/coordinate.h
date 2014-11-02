@@ -7,11 +7,12 @@
 #include "../config/my_coordinate.h"
 
 // Reset the components to viewing from d=0
-template <int d, typename T> static inline void swap(T *p, T *q, T *r)
+template <int d, typename T>
+static inline void swap(T *p, T *q, T *r)
 {
 	T tmp;
 
-	switch (d%3) {
+	switch (d % 3) {
 	case 0: // (p, q, r) -> (p, q, r)
 		break;
 	case 1: // (q, r, p) -> (p, q, r)
