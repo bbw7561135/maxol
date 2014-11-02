@@ -4,6 +4,8 @@
 #include "../config/comp_param.h"
 #include "../config/phys_param.h"
 
+void set_dt(double courant);
+
 void set_init_cond(double *Ep, double *Eq, double *Er,
                    double *BP, double *BQ, double *BR);
 

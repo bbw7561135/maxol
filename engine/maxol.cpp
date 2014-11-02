@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <errno.h>
 
 #include "maxol.h"
 
@@ -20,8 +21,8 @@ double dt;
 
 int main(int argc, char **argv)
 {
-	if (argc != 3) {
-		fprintf(stderr, "Usage: maxol NT_END NT_OUT\n");
+	if (argc < 3) {
+		fprintf(stderr, "Usage: maxol NT_END NT_OUT [COURANT]\n");
 		return 1;
 	}
 
@@ -29,13 +30,29 @@ int main(int argc, char **argv)
 	int nt_out = strtol(argv[2], NULL, 10);
 
 	if (nt_end == 0 || nt_out == 0) {
-		fprintf(stderr, "Arguments must be non-zero integers\n");
+		fprintf(stderr, "The 1st & 2nd arguments must be non-zero integers\n");
 		return 1;
 	}
 
-	dt = DT;
+	// determine and set time skip
+	double courant;
+	const double courant_def = 0.8;
+	if (argc >= 4) {
+		courant = strtod(argv[3], NULL);
+		if (courant == 0.0 || courant > 1.0) {
+			fprintf(stderr,
+					"Failed to convert the 3rd argument to double precision. Use default courant number %f\n",
+					courant_def);
+			courant = courant_def;
+		}
+	} else {
+		courant = courant_def;
+	}
 
-	fprintf(stdout, "### Maxol ###\n");
+	set_dt(courant);
+	fprintf(stderr, "Set dt = %E (Courant factor = %f)\n", dt, courant);
+
+	fprintf(stdout, "### Maouxol ###\n");
 
 	/*
 	 * In this code, I use modified Yee's lattice system.
@@ -144,7 +161,7 @@ int main(int argc, char **argv)
 
 		evolute_elect(Ep, Eq, Er, BP, BQ, BR);
 
-		bound_cond_elect(Ep, Eq, Er, (double)nt*DT);
+		bound_cond_elect(Ep, Eq, Er, (double)nt*dt);
 
 		// Save data
 		if (nt % nt_out == 0) {
@@ -158,7 +175,7 @@ int main(int argc, char **argv)
 		}
 
 		fprintf(stdout, "%d	%d	%f\n",
-				cpu_sec(start_clk), nt, (double)nt*DT);
+				cpu_sec(start_clk), nt, (double)nt*dt);
 	}
 
 	free(Ep); free(Eq); free(Er);

@@ -10,6 +10,8 @@
 #include "coordinate.h"
 #include "../config/comp_param.h"
 
+extern double dt;
+
 // Linear-extrapolate if on boundary else linear-interpolate.
 template <int N, int NS>
 double interpolate_line(const double *A, int i, int l)
@@ -171,7 +173,7 @@ int output(const double *Ep, const double *Eq, const double *Er,
 			S_IFREG | S_IRUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err;
 
-	t = ((float)nt*DT);
+	t = ((float)nt*dt);
 
 	if (write(fd, header, sizeof(header)) == -1) goto err;
 	if (write(fd, asize,  3*sizeof(int))  == -1) goto err;
@@ -197,7 +199,7 @@ int output(const double *Ep, const double *Eq, const double *Er,
 			S_IFREG | S_IRUSR | S_IRGRP | S_IROTH)) == -1)
 		goto err;
 
-	t = ((float)nt-0.5)*DT;
+	t = ((float)nt-0.5)*dt;
 
 	if (write(fd, header, sizeof(header)) == -1) goto err;
 	if (write(fd, asize,  3*sizeof(int))  == -1) goto err;
@@ -247,7 +249,7 @@ int output_grid(int nt) {
 	int _errno;
 	char header[] = "### Maxol ###\n";
 	int asize[] = {NP, NQ, NR};
-	float t = (float)nt*DT;
+	float t = (float)nt*dt;
 
 	if (sprintf(fpath, "%s/%08dG", outpath, nt) == EOF) {
 		free(X); free(Y); free(Z);

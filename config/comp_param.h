@@ -5,6 +5,4 @@
 #define NQ 6
 #define NR 4
 
-#define DT 0.01
-
 #endif /* COMP_PARAM_H_ */
