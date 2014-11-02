@@ -1,6 +1,6 @@
 /*
- * Maxol: A Maxwell's equations solver with FDTD method
- *        in a curvilinear coordinates system
+ * Maxol - A Maxwell's equations solver with FDTD method
+ *         in a curvilinear coordinates system
  *
  * Author: Kazuho FUJII (kazuho.fujii@gmail.com)
  */
