@@ -100,19 +100,22 @@ int main(int argc, char **argv)
 
 	// Output text
 	fprintf(stdout,
-			"p	q	r	x	y	z	x_cmpo	y_cmpo	z_cmpo\n");
+			"p	q	r	x	y	z	x_cmpo	y_cmpo	z_cmpo\n\n");
 
-	for (int k = 0; k < nr; k++)
-	for (int j = 0; j < nq; j++)
-	for (int i = 0; i < np; i++) {
-		fprintf(stdout, "%d	%d	%d	%E	%E	%E	%E	%E	%E\n",
-				i, j, k,
-				othnormal_position<0, 0>(i, j, k),
-				othnormal_position<1, 0>(i, j, k),
-				othnormal_position<2, 0>(i, j, k),
-				ax[i+np*(j+nq)],
-				ay[i+np*(j+nq)],
-				az[i+np*(j+nq)]);
+	for (int k = 0; k < nr; k++) {
+		for (int j = 0; j < nq; j++) {
+			for (int i = 0; i < np; i++) {
+				fprintf(stdout, "%d	%d	%d	%E	%E	%E	%E	%E	%E\n",
+						i, j, k,
+						othnormal_position<0, 0>(i, j, k),
+						othnormal_position<1, 0>(i, j, k),
+						othnormal_position<2, 0>(i, j, k),
+						ax[i+np*(j+nq*k)],
+						ay[i+np*(j+nq*k)],
+						az[i+np*(j+nq*k)]);
+			}
+		fprintf(stdout, "\n");
+		}
 	}
 
 	close(fd);

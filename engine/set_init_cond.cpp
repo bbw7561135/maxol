@@ -23,7 +23,6 @@ static void set_init_cond_elect(double *E)
 		const double ex = init_cond_elect_x(x, y, z);
 		const double ey = init_cond_elect_y(x, y, z);
 		const double ez = init_cond_elect_z(x, y, z);
-
 		const int l = j + N1*(k + N2*i);
 
 		// unphysical components along to the grid.

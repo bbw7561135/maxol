@@ -14,7 +14,7 @@ extern double dt;
 
 // Linear-extrapolate if on boundary else linear-interpolate.
 template <int N, int NS>
-double interpolate_line(const double *A, int i, int l)
+static double interpolate_line(const double *A, int i, int l)
 {
 	switch (i) {
 	case 0:   return   1.5 * A[l+NS] - 0.5 * A[l+2*NS];
@@ -69,23 +69,24 @@ static void get_othnomal_cmpo_elect(
 
 // Linear-extrapolate if on boundary else linear-interpolate.
 template <int N1, int N2, int NS1, int NS2>
-double interpolate_plane(const double *A, int i, int j, int l)
+static double interpolate_plane(const double *A, int i, int j, int l)
 {
-	double a, b;
-
 	switch(i) {
-	case 0:
-		a = interpolate_line<N2, NS2>(A, j, l+  NS1);
-		b = interpolate_line<N2, NS2>(A, j, l+2*NS1);
+	case 0: {
+		const double a = interpolate_line<N2, NS2>(A, j, l+NS1);
+		const double b = interpolate_line<N2, NS2>(A, j, l+2*NS1);
 		return   1.5*a - 0.5*b;
-	case N1-1:
-		a = interpolate_line<N2, NS2>(A, j, l-NS1);
-		b = interpolate_line<N2, NS2>(A, j, l);
+	}
+	case N1-1: {
+		const double a = interpolate_line<N2, NS2>(A, j, l-NS1);
+		const double b = interpolate_line<N2, NS2>(A, j, l);
 		return - 0.5*a + 1.5*b;
-	default:
-		a = interpolate_line<N2, NS2>(A, j, l);
-		b = interpolate_line<N2, NS2>(A, j, l+NS1);
+	}
+	default: {
+		const double a = interpolate_line<N2, NS2>(A, j, l);
+		const double b = interpolate_line<N2, NS2>(A, j, l+NS1);
 		return 0.5*a + 0.5*b;
+	}
 	}
 }
 
@@ -131,8 +132,8 @@ static void get_othnomal_cmpo_magnt(
 				contravariant_basic_vector<2, 1, 0>(p, q, r) * b1 +
 				contravariant_basic_vector<2, 2, 0>(p, q, r) * b2);
 	}
-
 }
+
 int output_grid(int nt);
 
 int output(const double *Ep, const double *Eq, const double *Er,
@@ -178,13 +179,13 @@ int output(const double *Ep, const double *Eq, const double *Er,
 	if (write(fd, header, sizeof(header)) == -1) goto err;
 	if (write(fd, asize,  3*sizeof(int))  == -1) goto err;
 	if (write(fd, &nt,    sizeof(int))    == -1) goto err;
-	if (write(fd, &t,     sizeof(float)) == -1)  goto err;
+	if (write(fd, &t,     sizeof(float))  == -1) goto err;
 
 	get_othnomal_cmpo_elect(EBX, EBY, EBZ, Ep, Eq, Er);
 
-	if (write(fd, EBX, sizeof(float)*NP*NQ*NR) == -1) goto err;
-	if (write(fd, EBY, sizeof(float)*NP*NQ*NR) == -1) goto err;
-	if (write(fd, EBZ, sizeof(float)*NP*NQ*NR) == -1) goto err;
+	if (write(fd, EBX, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	if (write(fd, EBY, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	if (write(fd, EBZ, NP*NQ*NR*sizeof(float)) == -1) goto err;
 
 	close(fd);
 
@@ -208,9 +209,9 @@ int output(const double *Ep, const double *Eq, const double *Er,
 
 	get_othnomal_cmpo_magnt(EBX, EBY, EBZ, BP, BQ, BR);
 
-	if (write(fd, EBX, sizeof(float)*NP*NQ*NR) == -1) goto err;
-	if (write(fd, EBY, sizeof(float)*NP*NQ*NR) == -1) goto err;
-	if (write(fd, EBZ, sizeof(float)*NP*NQ*NR) == -1) goto err;
+	if (write(fd, EBX, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	if (write(fd, EBY, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	if (write(fd, EBZ, NP*NQ*NR*sizeof(float)) == -1) goto err;
 
 	close(fd);
 	free(EBX); free(EBY); free(EBZ);
@@ -274,9 +275,9 @@ int output_grid(int nt) {
 		Z[l] = (float)othnormal_position<2, 0>(p, q, r);
 	}
 
-	if (write(fd, X, sizeof(float)*NP*NQ*NR) == -1) goto err;
-	if (write(fd, Y, sizeof(float)*NP*NQ*NR) == -1) goto err;
-	if (write(fd, Z, sizeof(float)*NP*NQ*NR) == -1) goto err;
+	if (write(fd, X, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	if (write(fd, Y, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	if (write(fd, Z, NP*NQ*NR*sizeof(float)) == -1) goto err;
 
 	close(fd);
 	free(X); free(Y); free(Z);
