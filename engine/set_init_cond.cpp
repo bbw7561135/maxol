@@ -23,6 +23,7 @@ static void set_init_cond_elect(double *E)
 		const double ex = init_cond_elect_x(x, y, z);
 		const double ey = init_cond_elect_y(x, y, z);
 		const double ez = init_cond_elect_z(x, y, z);
+
 		const int l = j + N1*(k + N2*i);
 
 		// unphysical components along to the grid.
@@ -56,7 +57,7 @@ static void set_init_cond_magnt(double *B)
 		const double by = init_cond_magnt_y(x, y, z);
 		const double bz = init_cond_magnt_z(x, y, z);
 
-		int l = i + N0*(j + N1*k);
+		int l = j + N1*(k + N2*i);
 
 		// physical component vertical with the grid
 		// Covariant basic vector is a member of coordinate transformation

@@ -6,8 +6,6 @@
 #include "../config/comp_param.h"
 #include "../config/phys_param.h"
 
-// TODO: To fix some bug (buffer overrun?)
-
 extern double dt;
 
 /*
@@ -47,6 +45,17 @@ extern double dt;
  *   i': 1/2 ~ N0-3/2
  *   j :  1  ~  N1-2
  *   k :  1  ~  N2-2
+ *
+ *         p1=j
+ * p0=i'     |
+ *     |     |    |
+ *  ---+-----==>--+---
+ *     |          |
+ *     |          |  ____ p2=k
+ *    ||    /     ||
+ *    v|   L      |v
+ *  ---+-----==>--+---
+ *     |          |
  *
  * Calculation is this order. Thus I reused the values on the right edge.
  *
@@ -98,7 +107,6 @@ static void __evolute_elect(double *E, const double *B1, const double *B2)
 			 */
 			const double dS = jacobian<c>(p0, p1, p2) *
 						len_of_contravariant_basic_vector<c, c>(p0, p1, p2);
-			assert(dS != 0.0);
 
 			// length of the edge (i',j,k-1/2)
 			const double lenA =

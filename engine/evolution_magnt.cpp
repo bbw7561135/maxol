@@ -12,9 +12,9 @@ extern double dt;
  * EFGH; and countour-integrate electric field along the edge of it.
  *
  * The surface element is not along the computational grid because it is along
- * contravariance basic vectors of the coodinate system.
+ * contravariant basic vectors of the coordinate system.
  * It is vertical to the grid. In the figure, AB, DC are vertical with EH, FG;
- * and AD, BC are vertical with EF, HG. Additionaly, EFGH is vertical with the
+ * and AD, BC are vertical with EF, HG. Additionally, EFGH is vertical with the
  * r-axis.
  *
  * The edges of surface element is on the points: I, J, K, L, where electric
@@ -61,16 +61,36 @@ extern double dt;
  *   k': 1/2 ~ NR-3/2
  *   j': 1/2 ~ NQ-3/2
  *
+ *                     /
+ *                    /| p1 = j'
+ *                   / |
+ *                  /  |
+ *                 /   |
+ *                /    |
+ * p2 = k'        |  ---->
+ *        /-------|----+------------/
+ *       /        |   /|           /
+ *      /     .   |  / |   .      /___ p0 = i
+ *     /      |   | // |   |     /
+ *    /       v   |/L  |   v    /
+ *   /------------+------------/
+ *                |  ---->
+ *                |    /
+ *                |   /
+ *                |  /
+ *                | /
+ *                |/
+ *
  * Calculation is this order. Thus I reused the values on the right edge.
  *
- *   j 1   2   3
- * k +---+---+---+
- * 1 | 1-------> |
- *   +---+---+---+
- * 3 | 2-------> |
- *   +---+---+---+
- * 4 | 3-------> |
- *   +---+---+---+
+ *   p1 1   2   3
+ * p2 +---+---+---+
+ *  1 | 1-------> |
+ *    +---+---+---+
+ *  3 | 2-------> |
+ *    +---+---+---+
+ *  4 | 3-------> |
+ *    +---+---+---+
  */
 
 template <int c, int N0, int N1, int N2>
@@ -79,12 +99,11 @@ static void __evolute_magnt(double *B, const double *E1, const double *E2)
 #ifdef _OPENMP
 #pragma omp for
 #endif
-	// I extract for-loop for vectorization.
-	// I don't extract inner loop because I reuse a value: intD.
-	// for i: 1 ~ N0-2, for k: 0 ~ N2-2
-	for (int ik = 0; ik < (N2-1)*(N0-2); ik++) {
-		const int i = ik / (N2-1) + 1;
-		const int k = ik % (N2-1);
+	// Extract for-loop for vectorization.
+	// Don't extract inner loop because reuse a value: intD.
+	for (int ik = 0; ik < (N0-2)*(N2-1); ik++) {
+		const int i = ik / (N2-1) + 1; // for i: 1 ~ N0-2
+		const int k = ik % (N2-1);     // for k: 0 ~ N2-2, k': 0.5 ~ N2-1.5
 
 		// (p0, p1, p2) is the center of the surface element.
 		const double p0 = (double)i;
@@ -92,16 +111,14 @@ static void __evolute_magnt(double *B, const double *E1, const double *E2)
 
 		// Calculate intD previously
 		// because we cannot reuse it at the first loop.
-		double intD;
-		{
-			// length of the edge (i',1,k')
-			const double lenD =
-					len_of_normalized_contravariant_basic_vector<2, c>(
-							p0, 1.5, p2);
-			const int lD = i + N0*(1 + N1*k);
-			intD = E2[lD]*lenD;
-		}
 
+		// length of the edge (i,1,k')
+		const double lenD =
+			len_of_normalized_contravariant_basic_vector<2, c>(p0, 1.0, p2);
+		const int lD = i + N0*(1 + N1*k);
+		double intD = E2[lD]*lenD;
+
+		// for j': 0.5 ~ N1-1.5
 		for (int j = 0; j < N1-1; j++) {
 			const double p1 = (double)j + 0.5;
 
@@ -116,7 +133,6 @@ static void __evolute_magnt(double *B, const double *E1, const double *E2)
 			 */
 			const double dS = jacobian<c>(p0, p1, p2) *
 					len_of_covariant_basic_vector<c, c>(p0, p1, p2);
-			assert(dS != 0.0);
 
 			// length of the edge (i,j',k'-1/2)
 			const double lenA =
@@ -148,7 +164,7 @@ static void __evolute_magnt(double *B, const double *E1, const double *E2)
 			const double oint = - intA + intB - intC +  intD;
 
 			// position of B(i,j',k')
-			const int l = j + N1*(k + N2*i);
+			const int l = j + (N1-1)*(k + (N2-1)*i);
 			// Maxwell–Faraday equation
 			B[l] -= dt*oint/dS;
 		}

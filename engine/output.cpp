@@ -12,13 +12,18 @@
 
 extern double dt;
 
+// Certainly a conditional branch in for loop is not fast,
+// but use it for readablity.
+
 // Linear-extrapolate if on boundary else linear-interpolate.
 template <int N, int NS>
-static double interpolate_line(const double *A, int i, int l)
+static double interpolate2(const double *A, int i, int l)
 {
 	switch (i) {
+	// boundary
 	case 0:   return   1.5 * A[l+NS] - 0.5 * A[l+2*NS];
 	case N-1: return - 0.5 * A[l-NS] + 1.5 * A[l];
+	// non-boundary
 	default:  return   0.5 * A[l]    + 0.5 * A[l+NS];
 	}
 }
@@ -27,21 +32,36 @@ static void get_othnomal_cmpo_elect(
 		float *EX, float *EY, float *EZ,
 		const double *EP, const double *EQ, const double *ER)
 {
+	/*
+	 *         p   +---- Calculate electric field vector here.
+	 *   +-----+--/--+
+	 *   |     | /   |
+	 *   |     v/    |
+	 * q +-->  +     +-->
+	 *   |           |
+	 *   |           |
+	 *   +-----+-----+
+	 *         |
+	 *         v
+	 */
 	for (int k = 0; k < NR; k++)
 	for (int j = 0; j < NQ; j++)
 	for (int i = 0; i < NP; i++) {
-		const int l0 = j + NQ*(k + NR*(i-1));
-		const int l1 = k + NR*(i + NP*(j-1));
-		const int l2 = i + NP*(j + NQ*(k-1));
-
 		const double p = (double)i;
 		const double q = (double)j;
 		const double r = (double)k;
 
+		const int l0 = j + NQ*(k + NR*(i-1));
+		const int l1 = k + NR*(i + NP*(j-1));
+		const int l2 = i + NP*(j + NQ*(k-1));
+
 		// physical components along to the grids
-		double e0 = interpolate_line<NP, NQ*NR>(EP, i, l0);
-		double e1 = interpolate_line<NQ, NR*NP>(EQ, j, l1);
-		double e2 = interpolate_line<NR, NP*NQ>(ER, k, l2);
+		// interpolate with p direction
+		double e0 = interpolate2<NP, NQ*NR>(EP, i, l0);
+		// interpolate with q direction
+		double e1 = interpolate2<NQ, NR*NP>(EQ, j, l1);
+		// interpolate with r direction
+		double e2 = interpolate2<NR, NP*NQ>(ER, k, l2);
 
 		// Convert to unphysical component.
 		e0 /= len_of_covariant_basic_vector<0, 0>(p, q, r);
@@ -69,24 +89,24 @@ static void get_othnomal_cmpo_elect(
 
 // Linear-extrapolate if on boundary else linear-interpolate.
 template <int N1, int N2, int NS1, int NS2>
-static double interpolate_plane(const double *A, int i, int j, int l)
+static double interpolate4(const double *A, int i1, int i2, int l)
 {
-	switch(i) {
-	case 0: {
-		const double a = interpolate_line<N2, NS2>(A, j, l+NS1);
-		const double b = interpolate_line<N2, NS2>(A, j, l+2*NS1);
+	double a, b;
+	switch(i1) {
+	// boundary
+	case 0:
+		a = interpolate2<N2, NS2>(A, i2, l+NS1);
+		b = interpolate2<N2, NS2>(A, i2, l+2*NS1);
 		return   1.5*a - 0.5*b;
-	}
-	case N1-1: {
-		const double a = interpolate_line<N2, NS2>(A, j, l-NS1);
-		const double b = interpolate_line<N2, NS2>(A, j, l);
+	case N1-1:
+		a = interpolate2<N2, NS2>(A, i2, l-NS1);
+		b = interpolate2<N2, NS2>(A, i2, l);
 		return - 0.5*a + 1.5*b;
-	}
-	default: {
-		const double a = interpolate_line<N2, NS2>(A, j, l);
-		const double b = interpolate_line<N2, NS2>(A, j, l+NS1);
-		return 0.5*a + 0.5*b;
-	}
+	// non-boundary
+	default:
+		a = interpolate2<N2, NS2>(A, i2, l);
+		b = interpolate2<N2, NS2>(A, i2, l+NS1);
+		return   0.5*a + 0.5*b;
 	}
 }
 
@@ -94,21 +114,36 @@ static void get_othnomal_cmpo_magnt(
 		float *BX, float *BY, float *BZ,
 		const double *BP, const double *BQ, const double *BR)
 {
+	/*
+	 *         p
+	 *         +-->
+	 *   +-----------+
+	 *   |       +------ Calculate magnetic flux density vector here.
+	 *   |      /    |
+	 * q+|     +     |+
+	 *  ||           ||
+	 *  v|           |v
+	 *   +-----------+
+	 *         +-->
+	 */
 	for (int k = 0; k < NR; k++)
 	for (int j = 0; j < NQ; j++)
 	for (int i = 0; i < NP; i++) {
-		const int l0 = j-1 + (NQ-1)*(k-1 + (NR-1)*i);
-		const int l1 = k-1 + (NR-1)*(i-1 + (NP-1)*j);
-		const int l2 = i-1 + (NP-1)*(j-1 + (NQ-1)*k);
-
 		const double p = (double)i;
 		const double q = (double)j;
 		const double r = (double)k;
 
+		const int l0 = j-1 + (NQ-1)*(k-1 + (NR-1)*i);
+		const int l1 = k-1 + (NR-1)*(i-1 + (NP-1)*j);
+		const int l2 = i-1 + (NP-1)*(j-1 + (NQ-1)*k);
+
 		// physical components vertical with grids
-		double b0 = interpolate_plane<NQ, NR, 1, NQ-1>(BP, j, k, l0);
-		double b1 = interpolate_plane<NR, NP, 1, NR-1>(BQ, k, i, l1);
-		double b2 = interpolate_plane<NP, NQ, 1, NP-1>(BR, i, j, l2);
+		// interpolate with q-r surface
+		double b0 = interpolate4<NQ, NR, 1, NQ-1>(BP, j, k, l0);
+		// interpolate with r-p surface
+		double b1 = interpolate4<NR, NP, 1, NR-1>(BQ, k, i, l1);
+		// interpolate with p-q surface
+		double b2 = interpolate4<NP, NQ, 1, NP-1>(BR, i, j, l2);
 
 		// Convert to unphysical component.
 		b0 /= len_of_contravariant_basic_vector<0, 0>(p, q, r);
