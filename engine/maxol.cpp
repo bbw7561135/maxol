@@ -129,8 +129,6 @@ int main(int argc, char **argv)
 		BP == NULL || BQ == NULL || BR == NULL) {
 		fprintf(stderr, "Failed to allocate memory. %s:%d\n",
 				__FILE__, __LINE__);
-		free(Ep); free(Eq); free(Er);
-		free(BP); free(BQ); free(BR);
 		return 1;
 	}
 
@@ -178,9 +176,6 @@ int main(int argc, char **argv)
 		fprintf(stdout, "%d	%d	%E	%E	%E\n",
 				cpu_sec(start_clk), nt, (double)nt*dt, eng_elect, eng_magnt);
 	}
-
-	free(Ep); free(Eq); free(Er);
-	free(BP); free(BQ); free(BR);
 
 	return 0;
 }
