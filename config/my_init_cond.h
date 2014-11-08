@@ -16,7 +16,7 @@ extern double dt;
 
 static double init_cond_elect_x(double x, double y, double z)
 {
-	return sin(- 2.0 * M_PI * z );
+	return sin(- 2.0 * M_PI * z);
 }
 
 static double init_cond_elect_y(double x, double y, double z)

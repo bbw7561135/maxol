@@ -9,12 +9,12 @@ void set_dt(double courant);
 void set_init_cond(double *Ep, double *Eq, double *Er,
                    double *BP, double *BQ, double *BR);
 
-void evolute_elect(
+double evolute_elect(
 		// electric fields at nt
 		double *Ep, double *Eq, double *Er,
 		 // magnetic flux densities at nt + 0.5
 		const double *BP, const double *BQ, const double *BR);
-void evolute_magnt(
+double evolute_magnt(
 		// magnetic flux densities at nt
 		double *BP, double *BQ, double *BR,
 		// electric fields at nt + 0.5

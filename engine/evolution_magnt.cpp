@@ -70,7 +70,7 @@ extern double dt;
  * p2 = k'        |  ---->
  *        /-------|----+------------/
  *       /        |   /|           /
- *      /     .   |  / |   .      /___ p0 = i
+ *      /     .   |  /.|   .      /___ p0 = i
  *     /      |   | // |   |     /
  *    /       v   |/L  |   v    /
  *   /------------+------------/
@@ -94,11 +94,11 @@ extern double dt;
  */
 
 template <int c, int N0, int N1, int N2>
-static void __evolute_magnt(double *B, const double *E1, const double *E2)
+static double __evolute_magnt(double *B, const double *E1, const double *E2)
 {
-#ifdef _OPENMP
-#pragma omp for
-#endif
+	// total energy of magnetic field
+	double eng = 0.0;
+
 	// Extract for-loop for vectorization.
 	// Don't extract inner loop because reuse a value: intD.
 	for (int ik = 0; ik < (N0-2)*(N2-1); ik++) {
@@ -131,8 +131,9 @@ static void __evolute_magnt(double *B, const double *E1, const double *E2)
 			 *   \ / dS\ /
 			 *    +-----+
 			 */
-			const double dS = jacobian<c>(p0, p1, p2) *
-					len_of_covariant_basic_vector<c, c>(p0, p1, p2);
+			const double jcb = jacobian<c>(p0, p1, p2);
+			const double dS =
+					jcb * len_of_covariant_basic_vector<c, c>(p0, p1, p2);
 
 			// length of the edge (i,j',k'-1/2)
 			const double lenA =
@@ -166,26 +167,28 @@ static void __evolute_magnt(double *B, const double *E1, const double *E2)
 			// position of B(i,j',k')
 			const int l = j + (N1-1)*(k + (N2-1)*i);
 			// Maxwell–Faraday equation
-			B[l] -= dt*oint/dS;
+			const double B_new = B[l] - dt * oint / dS;
+			B[l] = B_new;
+
+			// Add energy in the grid
+			eng += 0.5 / magnetic_permeability * B_new * B_new * jcb;
 		}
 	}
+
+	return eng;
 }
 
 /*
  * Evolute electric fields with leap-frog method following Faraday's law.
  */
-void evolute_magnt(
+double evolute_magnt(
 		// magnetic flux densities at nt
 		double *BP, double *BQ, double *BR,
 		// electric fields at nt + 0.5
 		const double *Ep, const double *Eq, const double *Er)
 {
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-	{
-		__evolute_magnt<0, NP, NQ, NR>(BP, Eq, Er);
-		__evolute_magnt<1, NQ, NR, NP>(BQ, Er, Ep);
-		__evolute_magnt<2, NR, NP, NQ>(BR, Ep, Eq);
-	}
+	double eng_P = __evolute_magnt<0, NP, NQ, NR>(BP, Eq, Er);
+	double eng_Q = __evolute_magnt<1, NQ, NR, NP>(BQ, Er, Ep);
+	double eng_R = __evolute_magnt<2, NR, NP, NQ>(BR, Ep, Eq);
+	return (eng_P + eng_Q + eng_R)/3.0;
 }

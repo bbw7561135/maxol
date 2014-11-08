@@ -69,11 +69,11 @@ extern double dt;
  *   +---+---+---+
  */
 template <int c, int N0, int N1, int N2>
-static void __evolute_elect(double *E, const double *B1, const double *B2)
+static double __evolute_elect(double *E, const double *B1, const double *B2)
 {
-#ifdef _OPENMP
-#pragma omp for
-#endif
+	// total energy of electric field
+	double eng = 0.0;
+
 	// Extract for-loop for vectorization.
 	// Don't extract inner loop because a value intD is reused.
 	// for i: 0 ~ N0-2, for k: 1 ~ N2-2
@@ -105,8 +105,9 @@ static void __evolute_elect(double *E, const double *B1, const double *B2)
 			 *   \ / dS\ /
 			 *    +-----+
 			 */
-			const double dS = jacobian<c>(p0, p1, p2) *
-						len_of_contravariant_basic_vector<c, c>(p0, p1, p2);
+			const double jcb = jacobian<c>(p0, p1, p2);
+			const double dS =
+					jcb * len_of_contravariant_basic_vector<c, c>(p0, p1, p2);
 
 			// length of the edge (i',j,k-1/2)
 			const double lenA =
@@ -137,9 +138,17 @@ static void __evolute_elect(double *E, const double *B1, const double *B2)
 			// position of E(i',j,k)
 			const int l = j + N1*(k + N2*i);
 			// Ampère's circuital law. Omitting electric current term.
-			E[l] += 1.0/(permeability*permittivity)*dt*oint/dS;
+			const double E_new = E[l] +
+					1.0 / (magnetic_permeability * electric_permittivity) *
+					dt * oint / dS;
+			E[l] = E_new;
+
+			// Add energy in the grid
+			eng += 0.5 * electric_permittivity * E_new * E_new * jcb;
 		}
 	}
+
+	return eng;
 }
 
 /*
@@ -147,18 +156,14 @@ static void __evolute_elect(double *E, const double *B1, const double *B2)
  * following Ampère's circuital law.
  * NOTICE:  Now I omit electric current term.
  */
-void evolute_elect(
+double evolute_elect(
 		// electric fields at nt
 		double *Ep, double *Eq, double *Er,
 		 // magnetic flux densities at nt + 0.5
 		const double *BP, const double *BQ, const double *BR)
 {
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-	{
-		__evolute_elect<0, NP, NQ, NR>(Ep, BQ, BR);
-		__evolute_elect<1, NQ, NR, NP>(Eq, BR, BP);
-		__evolute_elect<2, NR, NP, NQ>(Er, BP, BQ);
-	}
+	double eng_p = __evolute_elect<0, NP, NQ, NR>(Ep, BQ, BR);
+	double eng_q = __evolute_elect<1, NQ, NR, NP>(Eq, BR, BP);
+	double eng_r = __evolute_elect<2, NR, NP, NQ>(Er, BP, BQ);
+	return (eng_p + eng_q + eng_r)/3.0;
 }

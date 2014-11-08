@@ -145,8 +145,9 @@ int main(int argc, char **argv)
 
 	clock_t start_clk = clock(); // ignore err;
 
-	fprintf(stdout, "cpu_time	nt	time\n");
-	fprintf(stdout, "%d	%d	%f\n", cpu_sec(start_clk), 0, 0.0);
+	fprintf(stdout, "cpu_time	nt	time	electric_energy	magnet_energy\n");
+	fprintf(stdout, "%d	%d	%E	%E	%E\n",
+			cpu_sec(start_clk), 0, 0.0, 0.0, 0.0);
 
 	// Main loop
 	for (int nt = 1; nt <= nt_end; nt++) {
@@ -154,12 +155,12 @@ int main(int argc, char **argv)
 		 * For time evolution, I use leap-frog method.
 		 * Thus, B is at step of nt - 0.5
 		 */
-		evolute_magnt(BP, BQ, BR, Ep, Eq, Er);
+		double eng_magnt = evolute_magnt(BP, BQ, BR, Ep, Eq, Er);
 
 		// Boundary condition of magnet flux is not required.
 		// bound_cond_magnt(BP, BQ, BR);
 
-		evolute_elect(Ep, Eq, Er, BP, BQ, BR);
+		double eng_elect = evolute_elect(Ep, Eq, Er, BP, BQ, BR);
 
 		bound_cond_elect(Ep, Eq, Er);
 
@@ -174,8 +175,8 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Saved to file. nt=%d\n", nt);
 		}
 
-		fprintf(stdout, "%d	%d	%f\n",
-				cpu_sec(start_clk), nt, (double)nt*dt);
+		fprintf(stdout, "%d	%d	%E	%E	%E\n",
+				cpu_sec(start_clk), nt, (double)nt*dt, eng_elect, eng_magnt);
 	}
 
 	free(Ep); free(Eq); free(Er);

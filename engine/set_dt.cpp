@@ -23,6 +23,6 @@ void set_dt(double courant) {
 	}
 
 	// celeritas of light
-	const double c = 1.0/sqrt(permeability*permittivity);
+	const double c = 1.0/sqrt(magnetic_permeability*electric_permittivity);
 	dt = courant*dx_min/c;
 }
