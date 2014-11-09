@@ -1,4 +1,4 @@
-#include "../config/comp_param.h"
+#include "coordinate.h"
 
 // Certainly a conditional branch in for loop is not fast,
 // but use it for readablity.
@@ -40,7 +40,7 @@ static double interpolate4(const double *A, int i1, int i2, int l)
 }
 
 void get_othnomal_cmpo_elect(
-		float *EX, float *EY, float *EZ,
+		double *EX, double *EY, double *EZ,
 		const double *EP, const double *EQ, const double *ER)
 {
 	/*
@@ -81,25 +81,22 @@ void get_othnomal_cmpo_elect(
 
 		const int l = i + NP*(j + NQ*k);
 
-		EX[l] = (float)(
-				covariant_basic_vector<0, 0, 0>(p, q, r) * e0 +
+		EX[l] = covariant_basic_vector<0, 0, 0>(p, q, r) * e0 +
 				covariant_basic_vector<0, 1, 0>(p, q, r) * e1 +
-				covariant_basic_vector<0, 2, 0>(p, q, r) * e2);
+				covariant_basic_vector<0, 2, 0>(p, q, r) * e2;
 
-		EY[l] = (float)(
-				covariant_basic_vector<1, 0, 0>(p, q, r) * e0 +
+		EY[l] = covariant_basic_vector<1, 0, 0>(p, q, r) * e0 +
 				covariant_basic_vector<1, 1, 0>(p, q, r) * e1 +
-				covariant_basic_vector<1, 2, 0>(p, q, r) * e2);
+				covariant_basic_vector<1, 2, 0>(p, q, r) * e2;
 
-		EZ[l] = (float)(
-				covariant_basic_vector<2, 0, 0>(p, q, r) * e0 +
+		EZ[l] = covariant_basic_vector<2, 0, 0>(p, q, r) * e0 +
 				covariant_basic_vector<2, 1, 0>(p, q, r) * e1 +
-				covariant_basic_vector<2, 2, 0>(p, q, r) * e2);
+				covariant_basic_vector<2, 2, 0>(p, q, r) * e2;
 	}
 }
 
 void get_othnomal_cmpo_magnt(
-		float *BX, float *BY, float *BZ,
+		double *BX, double *BY, double *BZ,
 		const double *BP, const double *BQ, const double *BR)
 {
 	/*
@@ -140,19 +137,16 @@ void get_othnomal_cmpo_magnt(
 
 		const int l = i + NP*(j + NQ*k);
 
-		BX[l] = (float)(
-				contravariant_basic_vector<0, 0, 0>(p, q, r) * b0 +
+		BX[l] = contravariant_basic_vector<0, 0, 0>(p, q, r) * b0 +
 				contravariant_basic_vector<0, 1, 0>(p, q, r) * b1 +
-				contravariant_basic_vector<0, 2, 0>(p, q, r) * b2);
+				contravariant_basic_vector<0, 2, 0>(p, q, r) * b2;
 
-		BY[l] = (float)(
-				contravariant_basic_vector<1, 0, 0>(p, q, r) * b0 +
+		BY[l] = contravariant_basic_vector<1, 0, 0>(p, q, r) * b0 +
 				contravariant_basic_vector<1, 1, 0>(p, q, r) * b1 +
-				contravariant_basic_vector<1, 2, 0>(p, q, r) * b2);
+				contravariant_basic_vector<1, 2, 0>(p, q, r) * b2;
 
-		BZ[l] = (float)(
-				contravariant_basic_vector<2, 0, 0>(p, q, r) * b0 +
+		BZ[l] = contravariant_basic_vector<2, 0, 0>(p, q, r) * b0 +
 				contravariant_basic_vector<2, 1, 0>(p, q, r) * b1 +
-				contravariant_basic_vector<2, 2, 0>(p, q, r) * b2);
+				contravariant_basic_vector<2, 2, 0>(p, q, r) * b2;
 	}
 }

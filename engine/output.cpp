@@ -8,16 +8,15 @@
 #include <errno.h>
 
 #include "coordinate.h"
-#include "../config/comp_param.h"
 
 extern double dt;
 
 void get_othnomal_cmpo_elect(
-		float *EX, float *EY, float *EZ,
+		double *EX, double *EY, double *EZ,
 		const double *EP, const double *EQ, const double *ER);
 
 void get_othnomal_cmpo_magnt(
-		float *BX, float *BY, float *BZ,
+		double *BX, double *BY, double *BZ,
 		const double *BP, const double *BQ, const double *BR);
 
 int output_grid(int nt);
@@ -27,12 +26,14 @@ int output(const double *Ep, const double *Eq, const double *Er,
            int nt)
 {
 	// The order of values is as (0,0,0)(1,0,0)(0,1,0)(1,1,0)(0,0,1)...
-	float *EBX = (float *)malloc(NP*NQ*NR*sizeof(float));
-	float *EBY = (float *)malloc(NP*NQ*NR*sizeof(float));
-	float *EBZ = (float *)malloc(NP*NQ*NR*sizeof(float));
+	double *EBX = (double *)malloc(NP*NQ*NR*sizeof(double));
+	double *EBY = (double *)malloc(NP*NQ*NR*sizeof(double));
+	double *EBZ = (double *)malloc(NP*NQ*NR*sizeof(double));
 
-	if (EBX == NULL || EBY == NULL || EBZ == NULL ) {
-		free(EBX); free(EBY); free(EBZ);
+	float *F = (float *)malloc(NP*NQ*NR*sizeof(float));
+
+	if (EBX == NULL || EBY == NULL || EBZ == NULL || F == NULL) {
+		free(EBX); free(EBY); free(EBZ); free(F);
 		return ENOMEM;
 	}
 
@@ -52,7 +53,7 @@ int output(const double *Ep, const double *Eq, const double *Er,
 	// Output electric field
 
 	if (sprintf(fpath, "%s/%08dE", outpath, nt) == EOF) {
-		free(EBX); free(EBY); free(EBZ);
+		free(EBX); free(EBY); free(EBZ); free(F);
 		return ENAMETOOLONG;
 	}
 
@@ -69,16 +70,21 @@ int output(const double *Ep, const double *Eq, const double *Er,
 
 	get_othnomal_cmpo_elect(EBX, EBY, EBZ, Ep, Eq, Er);
 
-	if (write(fd, EBX, NP*NQ*NR*sizeof(float)) == -1) goto err;
-	if (write(fd, EBY, NP*NQ*NR*sizeof(float)) == -1) goto err;
-	if (write(fd, EBZ, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	for (int i; i < NP*NQ*NR; i++) F[i] = (float)EBX[i];
+	if (write(fd, F, NP*NQ*NR*sizeof(float)) == -1) goto err;
+
+	for (int i; i < NP*NQ*NR; i++) F[i] = (float)EBY[i];
+	if (write(fd, F, NP*NQ*NR*sizeof(float)) == -1) goto err;
+
+	for (int i; i < NP*NQ*NR; i++) F[i] = (float)EBZ[i];
+	if (write(fd, F, NP*NQ*NR*sizeof(float)) == -1) goto err;
 
 	close(fd);
 
 	// Output magnetic flux densities
 
 	if (sprintf(fpath, "%s/%08dB", outpath, nt) == EOF) {
-		free(EBX); free(EBY); free(EBZ);
+		free(EBX); free(EBY); free(EBZ); free(F);
 		return ENAMETOOLONG;
 	}
 
@@ -95,12 +101,17 @@ int output(const double *Ep, const double *Eq, const double *Er,
 
 	get_othnomal_cmpo_magnt(EBX, EBY, EBZ, BP, BQ, BR);
 
-	if (write(fd, EBX, NP*NQ*NR*sizeof(float)) == -1) goto err;
-	if (write(fd, EBY, NP*NQ*NR*sizeof(float)) == -1) goto err;
-	if (write(fd, EBZ, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	for (int i; i < NP*NQ*NR; i++) F[i] = (float)EBX[i];
+	if (write(fd, F, NP*NQ*NR*sizeof(float)) == -1) goto err;
+
+	for (int i; i < NP*NQ*NR; i++) F[i] = (float)EBY[i];
+	if (write(fd, F, NP*NQ*NR*sizeof(float)) == -1) goto err;
+
+	for (int i; i < NP*NQ*NR; i++) F[i] = (float)EBZ[i];
+	if (write(fd, F, NP*NQ*NR*sizeof(float)) == -1) goto err;
 
 	close(fd);
-	free(EBX); free(EBY); free(EBZ);
+	free(EBX); free(EBY); free(EBZ); free(F);
 
 	// Output grid data only at initialization.
 	if (nt == 0) return output_grid(nt);
