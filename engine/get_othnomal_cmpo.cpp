@@ -1,4 +1,4 @@
-#include "config/comp_param.h"
+#include "../config/comp_param.h"
 
 // Certainly a conditional branch in for loop is not fast,
 // but use it for readablity.

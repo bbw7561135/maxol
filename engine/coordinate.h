@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include "../config/my_coordinate.h"
+#include "../config/comp_param.h"
 
 // Reset the components to viewing from d=0
 template <int d, typename T>
