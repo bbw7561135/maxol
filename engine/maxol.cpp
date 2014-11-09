@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 	set_dt(courant);
 	fprintf(stderr, "Set dt = %E (Courant factor = %f)\n", dt, courant);
 
-	fprintf(stdout, "### Maouxol ###\n");
+	fprintf(stdout, "### Maxol ###\n");
 
 	/*
 	 * In this code, I use modified Yee's lattice system.
@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 	 *              ^ Er     ^ BR
 	 *          +---|-------+|
 	 *         /    |      /||
-	 *       //     *     / |*
+	 *       //     *     / ||
 	 *      //           /  |
 	 *     /+-----------+  ======>
 	 * BP L |           |   +   Eq
@@ -77,14 +77,7 @@ int main(int argc, char **argv)
 	 *
 	 * The covariant basic vectors are along to the computational grids.
 	 * The contravariant basic vectors are vertical to the computational grids.
-	 */
-
-	// Contravariant physical components of electric field.
-	double *Ep, *Eq, *Er;
-	// Covariant physical components of magnetic flux density.
-	double *BP, *BQ, *BR;
-
-	/*
+	 *
 	 * Grid position are like this.
 	 *
 	 * (p) 0   1  ... NP-1
@@ -117,13 +110,16 @@ int main(int argc, char **argv)
 	 *
 	 * This is for code simplification and caching optimization.
 	 */
-	Ep = (double *)malloc(NQ*NR*(NP-1)*sizeof(double));
-	Eq = (double *)malloc(NR*NP*(NQ-1)*sizeof(double));
-	Er = (double *)malloc(NP*NQ*(NR-1)*sizeof(double));
 
-	BP = (double *)malloc((NQ-1)*(NR-1)*NP*sizeof(double));
-	BQ = (double *)malloc((NR-1)*(NP-1)*NQ*sizeof(double));
-	BR = (double *)malloc((NP-1)*(NQ-1)*NR*sizeof(double));
+	// Contravariant physical components of electric field.
+	double *Ep = (double *)malloc(NQ*NR*(NP-1)*sizeof(double));
+	double *Eq = (double *)malloc(NR*NP*(NQ-1)*sizeof(double));
+	double *Er = (double *)malloc(NP*NQ*(NR-1)*sizeof(double));
+
+	// Covariant physical components of magnetic flux density.
+	double *BP = (double *)malloc((NQ-1)*(NR-1)*NP*sizeof(double));
+	double *BQ = (double *)malloc((NR-1)*(NP-1)*NQ*sizeof(double));
+	double *BR = (double *)malloc((NP-1)*(NQ-1)*NR*sizeof(double));
 
 	if (Ep == NULL || Eq == NULL || Er == NULL ||
 		BP == NULL || BQ == NULL || BR == NULL) {
