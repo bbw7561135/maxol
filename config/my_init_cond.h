@@ -14,36 +14,24 @@ extern double dt;
 
 // At nt = 0
 
-static double init_cond_elect_x(double x, double y, double z)
+static struct vector init_cond_elect(struct vector position)
 {
-	return sin(- 2.0 * M_PI * z);
-}
+	double ex = sin(- 2.0 * M_PI * position._2);
+	double ey = 0.0;
+	double ez = 0.0;
 
-static double init_cond_elect_y(double x, double y, double z)
-{
-	return 0.0;
-}
-
-static double init_cond_elect_z(double x, double y, double z)
-{
-	return 0.0;
+	return {ex, ey, ez};
 }
 
 // At nt = 0.5
 
-static double init_cond_magnt_x(double x, double y, double z)
+static struct vector init_cond_magnt(struct vector position)
 {
-	return 0.0;
-}
+	double bx = 0.0;
+	double by = sin(2.0 * M_PI * (0.5 * dt - position._2));
+	double bz = 0.0;
 
-static double init_cond_magnt_y(double x, double y, double z)
-{
-	return sin(2.0 * M_PI * (0.5 * dt - z));
-}
-
-static double init_cond_magnt_z(double x, double y, double z)
-{
-	return 0.0;
+	return {bx, by, bz};
 }
 
 #endif /* MY_INIT_COND_H_ */

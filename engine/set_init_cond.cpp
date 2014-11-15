@@ -11,30 +11,21 @@ static void set_init_cond_elect(double *E)
 	for (int i = 0; i < N0; i++)
 	for (int k = 0; k < N2; k++)
 	for (int j = 0; j < N1; j++) {
-		const double p0 = (double)i + 0.5;
-		const double p1 = (double)j;
-		const double p2 = (double)k;
-
-		const double x = othnormal_position<0, c>(p0, p1, p2);
-		const double y = othnormal_position<1, c>(p0, p1, p2);
-		const double z = othnormal_position<2, c>(p0, p1, p2);
+		const struct vector pos = {(double)i+0.5, (double)j, (double)k};
 
 		// othnormal component
-		const double ex = init_cond_elect_x(x, y, z);
-		const double ey = init_cond_elect_y(x, y, z);
-		const double ez = init_cond_elect_z(x, y, z);
-
-		const int l = j + N1*(k + N2*i);
+		const struct vector p_xyz = othnormal_position<c>(pos);
+		const struct vector e_xyz = init_cond_elect(p_xyz);
 
 		// unphysical components along to the grid.
 		// Contravariant basic vector is a member of coordinate transformation
 		// matrix here.
-		const double e = contravariant_basic_vector<0, c, c>(p0, p1, p2) * ex +
-						 contravariant_basic_vector<1, c, c>(p0, p1, p2) * ey +
-						 contravariant_basic_vector<2, c, c>(p0, p1, p2) * ez;
+		const double e = inner_product(
+				contravariant_basic_vector<c, c>(pos), e_xyz);
 
 		// Convert to physical length.
-		E[l] = e * len_of_covariant_basic_vector<c, c>(p0, p1, p2);
+		const int l = j + N1*(k + N2*i);
+		E[l] = e * vector_length(covariant_basic_vector<c, c>(pos));
 	}
 }
 
@@ -44,30 +35,21 @@ static void set_init_cond_magnt(double *B)
 	for (int i = 0; i < N0; i++)
 	for (int k = 0; k < N2; k++)
 	for (int j = 0; j < N1; j++) {
-		const double p0 = (double)i;
-		const double p1 = (double)j + 0.5;
-		const double p2 = (double)k + 0.5;
-
-		const double x = othnormal_position<0, c>(p0, p1, p2);
-		const double y = othnormal_position<1, c>(p0, p1, p2);
-		const double z = othnormal_position<2, c>(p0, p1, p2);
+		const struct vector pos = {(double)i, (double)j+0.5, (double)k+0.5};
 
 		// othnormal component
-		const double bx = init_cond_magnt_x(x, y, z);
-		const double by = init_cond_magnt_y(x, y, z);
-		const double bz = init_cond_magnt_z(x, y, z);
-
-		int l = j + N1*(k + N2*i);
+		const struct vector p_xyz = othnormal_position<c>(pos);
+		const struct vector b_xyz = init_cond_magnt(p_xyz);
 
 		// physical component vertical with the grid
 		// Covariant basic vector is a member of coordinate transformation
 		// matrix here.
-		const double b = covariant_basic_vector<0, c, c>(p0, p1, p2) * bx +
-						 covariant_basic_vector<1, c, c>(p0, p1, p2) * by +
-						 covariant_basic_vector<2, c, c>(p0, p1, p2) * bz;
+		const double b = inner_product(
+				covariant_basic_vector<c, c>(pos), b_xyz);
 
 		// Convert to physical length.
-		B[l] = b * len_of_contravariant_basic_vector<c, c>(p0, p1, p2);
+		const int l = j + N1*(k + N2*i);
+		B[l] = b * vector_length(contravariant_basic_vector<c, c>(pos));
 	}
 }
 

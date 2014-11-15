@@ -4,24 +4,20 @@
 #include <assert.h>
 #include <math.h>
 
+#include "vector.h"
 #include "../config/my_coordinate.h"
-#include "../config/comp_param.h"
 
 // Reset the components to viewing from d=0
-template <int d, typename T>
-static inline void swap(T *p, T *q, T *r)
+template <int d>
+static inline struct vector swap(struct vector position)
 {
-	T tmp;
-
 	switch (d % 3) {
-	case 0: // (p, q, r) -> (p, q, r)
-		break;
-	case 1: // (q, r, p) -> (p, q, r)
-		tmp = *p; *p = *r; *r = *q; *q = tmp;
-		break;
-	case 2: // (r, p, q) -> (p, q, r)
-		tmp = *p; *p = *q; *q = *r; *r = tmp;
-		break;
+	// (p, q, r) -> (p, q, r)
+	case 0: return position;
+	// (q, r, p) -> (p, q, r)
+	case 1: return {position._2, position._0, position._1};
+	// (r, p, q) -> (p, q, r)
+	case 2: return {position._1, position._2, position._0};
 	}
 }
 
@@ -34,239 +30,68 @@ static inline void swap(T *p, T *q, T *r)
  * d means viewing direction. (p, q, r) are components when viewing from d.
  * If d == 0, the view is normal.
  */
-template <int c, int d, typename T> double othnormal_position(T p, T q, T r)
+template <int d>
+vector othnormal_position(struct vector position)
 {
-	swap<d>(&p, &q, &r);
-	switch (c%3) {
-	case 0: return x((double)p, (double)q, (double)r);
-	case 1: return y((double)p, (double)q, (double)r);
-	case 2: return z((double)p, (double)q, (double)r);
-	}
+	position = swap<d>(position);
+	return xyz(position);
 }
 
 // also called jacobi matrix
 // XXX: memoize
-template <int cx, int cp, int d>
-double covariant_basic_vector(double p, double q, double r)
+template <int c, int d>
+struct vector covariant_basic_vector(struct vector position)
 {
-	swap<d>(&p, &q, &r);
-	switch (cx%3 + 3*(cp%3)) {
-	// p
-	case 0: return dx_dp(p, q, r);
-	case 1: return dy_dp(p, q, r);
-	case 2: return dz_dp(p, q, r);
-	// q
-	case 3: return dx_dq(p, q, r);
-	case 4: return dy_dq(p, q, r);
-	case 5: return dz_dq(p, q, r);
-	// r
-	case 6: return dx_dr(p, q, r);
-	case 7: return dy_dr(p, q, r);
-	case 8: return dz_dr(p, q, r);
+	position = swap<d>(position);
+	switch (c%3) {
+	case 0: return dxyz_dp(position);
+	case 1: return dxyz_dq(position);
+	case 2: return dxyz_dr(position);
 	}
 }
 
 template <int ci, int cj, int d>
-static inline double covariant_metric_tensor(double p, double q, double r)
+static inline double covariant_metric_tensor(struct vector position)
 {
-	swap<d>(&p, &q, &r);
-
-	if (ci == cj) {
-		const double v0 = covariant_basic_vector<0, ci, 0>(p, q, r);
-		const double v1 = covariant_basic_vector<1, ci, 0>(p, q, r);
-		const double v2 = covariant_basic_vector<2, ci, 0>(p, q, r);
-		return v0*v0 + v1*v1 + v2*v2;
-	}
-
-	return covariant_basic_vector<0, ci, 0>(p, q, r) *
-		   covariant_basic_vector<0, cj, 0>(p, q, r) +
-	       covariant_basic_vector<1, ci, 0>(p, q, r) *
-		   covariant_basic_vector<1, cj, 0>(p, q, r) +
-	       covariant_basic_vector<2, ci, 0>(p, q, r) *
-		   covariant_basic_vector<2, cj, 0>(p, q, r);
-}
-
-// The length of the "c" component of covariant basic vector.
-template <int c, int d>
-double len_of_covariant_basic_vector(double p, double q, double r)
-{
-	return sqrt(covariant_metric_tensor<c, c, d>(p, q, r));
+	struct vector gi = covariant_basic_vector<ci, d>(position);
+	if (ci == cj) return inner_product(gi, gi);
+	struct vector gj = covariant_basic_vector<cj, d>(position);
+	return inner_product(gi, gj);
 }
 
 template <int d>
-double jacobian(double p, double q, double r)
+double jacobian(struct vector position)
 {
-	swap<d>(&p, &q, &r);
-	return dx_dp(p, q, r)*dy_dq(p, q, r)*dz_dr(p, q, r)
-	     + dx_dq(p, q, r)*dy_dr(p, q, r)*dz_dp(p, q, r)
-	     + dx_dr(p, q, r)*dy_dp(p, q, r)*dz_dq(p, q, r)
-	     - dx_dr(p, q, r)*dy_dq(p, q, r)*dz_dp(p, q, r)
-	     - dx_dq(p, q, r)*dy_dp(p, q, r)*dz_dr(p, q, r)
-	     - dx_dp(p, q, r)*dy_dr(p, q, r)*dz_dq(p, q, r);
-}
+	position = swap<d>(position);
+	struct vector dp = dxyz_dp(position);
+	struct vector dq = dxyz_dq(position);
+	struct vector dr = dxyz_dr(position);
 
-// contravariant basic vectors
-
-// p, q, r -> dp/dx
-static inline double dp_dx(double p, double q, double r)
-{
-	return (dy_dq(p, q, r)*dz_dr(p, q, r) -
-			dy_dr(p, q, r)*dz_dq(p, q, r)) /
-			jacobian<0>(p, q, r);
-}
-
-// p, q, r -> dq/dx
-static inline double dq_dx(double p, double q, double r)
-{
-	return (dy_dr(p, q, r)*dz_dp(p, q, r) -
-			dy_dp(p, q, r)*dz_dr(p, q, r)) /
-			jacobian<0>(p, q, r);
-}
-
-// p, q, r -> dr/dx
-static inline double dr_dx(double p, double q, double r)
-{
-	return (dy_dp(p, q, r)*dz_dq(p, q, r) -
-			dy_dq(p, q, r)*dz_dp(p, q, r)) /
-			jacobian<0>(p, q, r);
-}
-
-// p, q, r -> dp/dy
-static inline double dp_dy(double p, double q, double r)
-{
-	return (dz_dq(p, q, r)*dx_dr(p, q, r) -
-			dz_dr(p, q, r)*dx_dq(p, q, r)) /
-			jacobian<0>(p, q, r);
-}
-
-// p, q, r -> dq/dy
-static inline double dq_dy(double p, double q, double r)
-{
-	return (dz_dr(p, q, r)*dx_dp(p, q, r) -
-			dz_dp(p, q, r)*dx_dr(p, q, r)) /
-			jacobian<0>(p, q, r);
-}
-
-// p, q, r -> dr/dy
-static inline double dr_dy(double p, double q, double r)
-{
-	return (dz_dp(p, q, r)*dx_dq(p, q, r) -
-			dz_dq(p, q, r)*dx_dp(p, q, r)) /
-			jacobian<0>(p, q, r);
-}
-
-// p, q, r -> dp/dz
-static inline double dp_dz(double p, double q, double r)
-{
-	return (dx_dq(p, q, r)*dy_dr(p, q, r) -
-			dx_dr(p, q, r)*dy_dq(p, q, r)) /
-			jacobian<0>(p, q, r);
-}
-
-// p, q, r -> dq/dz
-static inline double dq_dz(double p, double q, double r)
-{
-	return (dx_dr(p, q, r)*dy_dp(p, q, r) -
-			dx_dp(p, q, r)*dy_dr(p, q, r)) /
-			jacobian<0>(p, q, r);
-}
-
-// p, q, r -> dr/dz
-static inline double dr_dz(double p, double q, double r)
-{
-	return (dx_dp(p, q, r)*dy_dq(p, q, r) -
-			dx_dq(p, q, r)*dy_dp(p, q, r)) /
-			jacobian<0>(p, q, r);
+	return dp._0 * dq._1 * dr._2
+		 + dq._0 * dr._1 * dp._2
+		 + dr._0 * dp._1 * dq._2
+		 - dr._0 * dq._1 * dp._2
+		 - dq._0 * dp._1 * dr._2
+		 - dp._0 * dr._1 * dq._2;
 }
 
 // also called inverse jacobi matrix
-template <int cx, int cp, int d>
-double contravariant_basic_vector(double p, double q, double r)
+template <int c, int d>
+struct vector contravariant_basic_vector(struct vector position)
 {
-	swap<d>(&p, &q, &r);
-	switch (cx%3 + 3*(cp%3)) {
-	// p
-	case 0: return dp_dx(p, q, r);
-	case 1: return dp_dy(p, q, r);
-	case 2: return dp_dz(p, q, r);
-	// q
-	case 3: return dq_dx(p, q, r);
-	case 4: return dq_dy(p, q, r);
-	case 5: return dq_dz(p, q, r);
-	// r
-	case 6: return dr_dx(p, q, r);
-	case 7: return dr_dy(p, q, r);
-	case 8: return dr_dz(p, q, r);
-	}
+	return vector_multiple(
+			exterior_product(covariant_basic_vector<c+1, d>(position),
+							 covariant_basic_vector<c+2, d>(position)),
+			1.0/jacobian<d>(position));
 }
 
 template <int ci, int cj, int d>
-static inline double contravariant_metric_tensor(double p, double q, double r)
+static inline double contravariant_metric_tensor(struct vector position)
 {
-	swap<d>(&p, &q, &r);
-
-	if (ci == cj) {
-		const double v0 = contravariant_basic_vector<0, ci, 0>(p, q, r);
-		const double v1 = contravariant_basic_vector<1, ci, 0>(p, q, r);
-		const double v2 = contravariant_basic_vector<2, ci, 0>(p, q, r);
-		return v0*v0 + v1*v1 + v2*v2;
-	}
-
-	return contravariant_basic_vector<0, ci, 0>(p, q, r) *
-	       contravariant_basic_vector<0, cj, 0>(p, q, r) +
-	       contravariant_basic_vector<1, ci, 0>(p, q, r) *
-	       contravariant_basic_vector<1, cj, 0>(p, q, r) +
-	       contravariant_basic_vector<2, ci, 0>(p, q, r) *
-	       contravariant_basic_vector<2, cj, 0>(p, q, r);
-}
-
-// The length of the "c" component of contravariant basic vector.
-template <int c, int d>
-double len_of_contravariant_basic_vector(double p, double q, double r)
-{
-	return sqrt(contravariant_metric_tensor<c, c, d>(p, q, r));
-}
-
-/*
- * contravariant basic vectors normalized to the same size as
- * covariant basic vectors:
- * dx->/dp * (dx->/dQ X dx->/dR) == dx->/dp * (dx->/dq X dx->/dr)
- * Although this function is heavy, I use it for simplification the code.
- * XXX: memoize
- */
-template <int cx, int cp, int d>
-double normalized_contravariant_basic_vector(double p, double q, double r)
-{
-	swap<d>(&p, &q, &r);
-	double coefficient = pow(jacobian<0>(p, q, r), 2.0/3.0);
-
-	switch (cx%3 + 3*(cp%3)) {
-	// p
-	case 0: return coefficient * dx_dp(p, q, r);
-	case 1: return coefficient * dy_dp(p, q, r);
-	case 2: return coefficient * dz_dp(p, q, r);
-	// q
-	case 3: return coefficient * dx_dq(p, q, r);
-	case 4: return coefficient * dy_dq(p, q, r);
-	case 5: return coefficient * dz_dq(p, q, r);
-	// r
-	case 6: return coefficient * dx_dr(p, q, r);
-	case 7: return coefficient * dy_dr(p, q, r);
-	case 8: return coefficient * dz_dr(p, q, r);
-	}
-}
-
-template <int c, int d>
-double len_of_normalized_contravariant_basic_vector(
-		double p, double q, double r)
-{
-	swap<d>(&p, &q, &r);
-
-	const double dx = normalized_contravariant_basic_vector<0, c, 0>(p, q, r);
-	const double dy = normalized_contravariant_basic_vector<1, c, 0>(p, q, r);
-	const double dz = normalized_contravariant_basic_vector<2, c, 0>(p, q, r);
-
-	return sqrt(dx*dx + dy*dy + dz*dz);
+	struct vector gi = contravariant_basic_vector<ci, d>(position);
+	if (ci == cj) return inner_product(gi, gi);
+	struct vector gj = contravariant_basic_vector<cj, d>(position);
+	return inner_product(gi, gj);
 }
 
 #endif /* COORDINATE_H_ */

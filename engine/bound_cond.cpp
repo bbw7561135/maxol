@@ -1,3 +1,4 @@
+#include "vector.h"
 #include "../config/comp_param.h"
 #include "../config/my_bound_cond.h"
 
@@ -18,10 +19,9 @@
  */
 
 template <int c, int b>
-static double elect_val_on_bound(
-		double p0, double p1, double p2, const double *E)
+static double elect_val_on_bound(struct vector pos, const double *E)
 {
-	swap<c>(&p0, &p1, &p2);
+	pos = swap<c>(pos);
 
 	/*
 	 * case c == 0: bound(A,B,C,D,E,F) -> bound(0,1,2,3,4,5)
@@ -30,21 +30,21 @@ static double elect_val_on_bound(
 	 */
 	switch(c + 3*b){
 	// bound B
-	case 3:  return bound_cond_elect_p1(p2, p0, E);
-	case 4:  return bound_cond_elect_q2(p0, p1, E);
-	case 5:  return bound_cond_elect_r3(p1, p2, E);
+	case 3:  return bound_cond_elect_p1(pos._2, pos._0, E);
+	case 4:  return bound_cond_elect_q2(pos._0, pos._1, E);
+	case 5:  return bound_cond_elect_r3(pos._1, pos._2, E);
 	// Bound C
-	case 6:  return bound_cond_elect_p2(p0, p1, E);
-	case 7:  return bound_cond_elect_q0(p1, p2, E);
-	case 8:  return bound_cond_elect_r1(p2, p0, E);
+	case 6:  return bound_cond_elect_p2(pos._0, pos._1, E);
+	case 7:  return bound_cond_elect_q0(pos._1, pos._2, E);
+	case 8:  return bound_cond_elect_r1(pos._2, pos._0, E);
 	// Bound E
-	case 12: return bound_cond_elect_p4(p2, p0, E);
-	case 13: return bound_cond_elect_q5(p0, p1, E);
-	case 14: return bound_cond_elect_r3(p1, p2, E);
+	case 12: return bound_cond_elect_p4(pos._2, pos._0, E);
+	case 13: return bound_cond_elect_q5(pos._0, pos._1, E);
+	case 14: return bound_cond_elect_r3(pos._1, pos._2, E);
 	// Bound F
-	case 15: return bound_cond_elect_p5(p0, p1, E);
-	case 16: return bound_cond_elect_q3(p1, p2, E);
-	case 17: return bound_cond_elect_r4(p2, p0, E);
+	case 15: return bound_cond_elect_p5(pos._0, pos._1, E);
+	case 16: return bound_cond_elect_q3(pos._1, pos._2, E);
+	case 17: return bound_cond_elect_r4(pos._2, pos._0, E);
 	}
 	assert(0);
 }
@@ -54,45 +54,41 @@ static void __bound_cond_elect(double *E)
 {
 	// tangential components to boundary is zero
 
-#ifdef _OPENMP
-#pragma omp for
-#endif
 	for (int i = 0; i < N0; i++){
 		for (int j = 1; j < N1-1; j++) {
 			// Bound C
 			const int k0 = 0;
 			const int l0 = j + N1*(k0 + N2*i);
-			E[l0] = elect_val_on_bound<c, 2>(i, j, k0, E);
+			E[l0] = elect_val_on_bound<c, 2>(
+					{(double)i, (double)j, (double)k0}, E);
 
 			// Bound F
 			const int k1 = N2-1;
 			const int l1 = j + N1*(k1 + N2*i);
-			E[l1] = elect_val_on_bound<c, 5>(i, j, k1, E);
+			E[l1] = elect_val_on_bound<c, 5>(
+					{(double)i, (double)j, (double)k1}, E);
 		}
 		for (int k = 0; k < N2; k++) {
 			// Bound B
 			const int j0 = 0;
 			const int l0 = j0 + N1*(k + N2*i);
-			E[l0] = elect_val_on_bound<c, 1>(i, j0, k, E);
+			E[l0] = elect_val_on_bound<c, 1>(
+					{(double)i, (double)j0, (double)k}, E);
 
 			// Bound E
 			const int j1 = N1-1;
 			const int l1 = j1 + N1*(k + N2*i);
-			E[l1] = elect_val_on_bound<c, 1>(i, j1, k, E);
+			E[l1] = elect_val_on_bound<c, 1>(
+					{(double)i, (double)j1, (double)k}, E);
 		}
 	}
 }
 
 void bound_cond_elect(double *Ep, double *Eq, double *Er)
 {
-#ifdef _OPENMP
-#pragma omp parallel
-#endif
-	{
-		__bound_cond_elect<0, NP-1, NQ, NR>(Ep);
-		__bound_cond_elect<1, NQ-1, NR, NP>(Eq);
-		__bound_cond_elect<2, NR-1, NP, NQ>(Er);
-	}
+	__bound_cond_elect<0, NP-1, NQ, NR>(Ep);
+	__bound_cond_elect<1, NQ-1, NR, NP>(Eq);
+	__bound_cond_elect<2, NR-1, NP, NQ>(Er);
 }
 
 // Only vertical components face on the boundaries. However, they are not

@@ -105,11 +105,11 @@ int main(int argc, char **argv)
 	for (int k = 0; k < nr; k++) {
 		for (int j = 0; j < nq; j++) {
 			for (int i = 0; i < np; i++) {
+				struct vector pos = othnormal_position<0>(
+						{(double)i, (double)j, (double) k});
 				fprintf(stdout, "%d	%d	%d	%E	%E	%E	%E	%E	%E\n",
 						i, j, k,
-						othnormal_position<0, 0>(i, j, k),
-						othnormal_position<1, 0>(i, j, k),
-						othnormal_position<2, 0>(i, j, k),
+						pos._0, pos._1, pos._2,
 						ax[i+np*(j+nq*k)],
 						ay[i+np*(j+nq*k)],
 						az[i+np*(j+nq*k)]);

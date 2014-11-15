@@ -1,6 +1,5 @@
 #include <float.h>
 
-
 #include "coordinate.h"
 #include "../config/comp_param.h"
 #include "../config/phys_param.h"
@@ -14,10 +13,11 @@ void set_dt(double courant) {
 	for (int r = 0; r < NR; r++)
 	for (int q = 0; q < NQ; q++)
 	for (int p = 0; p < NP; p++) {
-		// Is this right?
-		const double dd0 = covariant_metric_tensor<0, 0, 0>(p, q, r);
-		const double dd1 = covariant_metric_tensor<1, 1, 0>(p, q, r);
-		const double dd2 = covariant_metric_tensor<2, 2, 0>(p, q, r);
+		// TODO: Is this right?
+		const struct vector pos = {(double)p, (double)q, (double)r};
+		const double dd0 = covariant_metric_tensor<0, 0, 0>(pos);
+		const double dd1 = covariant_metric_tensor<1, 1, 0>(pos);
+		const double dd2 = covariant_metric_tensor<2, 2, 0>(pos);
 		const double dx = 1.0/sqrt(1.0/dd0 + 1.0/dd1 + 1.0/dd2);
 		dx_min = dx < dx_min ? dx : dx_min;
 	}

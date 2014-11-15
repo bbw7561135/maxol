@@ -112,6 +112,19 @@ extern double dt;
  * 4 | 3-------> |
  *   +---+---+---+
  */
+
+/*
+ * contravariant basic vectors normalized to the same size (Jacobian) as
+ * covariant basic vectors.
+ */
+template <int c, int d>
+static inline struct vector normalized_contravariant_basic_vector(struct vector position)
+{
+	const double coefficient = pow(jacobian<d>(position), 2.0/3.0);
+	return vector_multiple(
+				contravariant_basic_vector<c, d>(position), coefficient);
+}
+
 template <int c, int N0, int N1, int N2>
 static double __evolute_elect(double *E, const double *B1, const double *B2)
 {
@@ -133,7 +146,8 @@ static double __evolute_elect(double *E, const double *B1, const double *B2)
 		// Calculate intD previously because cannot reuse it at the first loop.
 
 		// length of the edge (i',3/2,k)
-		const double lenD = len_of_covariant_basic_vector<2, c>(p0, 1.5, p2);
+		const double lenD = vector_length(
+								covariant_basic_vector<2, c>({p0, 1.5, p2}));
 		const int lD = i + (N0-1)*(1 + (N1-1)*k);
 		double intD = B2[lD]*lenD;
 
@@ -149,22 +163,19 @@ static double __evolute_elect(double *E, const double *B1, const double *B2)
 			 *   \ / dS\ /
 			 *    +-----+
 			 */
-			const double jcb = jacobian<c>(p0, p1, p2);
-			const double dS =
-					jcb / len_of_covariant_basic_vector<c, c>(p0, p1, p2);
+			const double jcb = jacobian<c>({p0, p1, p2});
+			const double dS = jcb / vector_length(
+					covariant_basic_vector<c, c>({p0, p1, p2}));
 
 			// length of the edge (i',j,k-1/2)
-			const double lenA =
-					len_of_normalized_contravariant_basic_vector<1, c>(
-							p0, p1, p2-0.5);
+			const double lenA = vector_length(
+				normalized_contravariant_basic_vector<1, c>({p0, p1, p2-0.5}));
 			// length of the edge (i',j,k+1/2)
-			const double lenB =
-					len_of_normalized_contravariant_basic_vector<1, c>(
-							p0, p1, p2+0.5);
+			const double lenB = vector_length(
+				normalized_contravariant_basic_vector<1, c>({p0, p1, p2+0.5}));
 			// length of the edge (i',j+1/2,k)
-			const double lenD =
-					len_of_normalized_contravariant_basic_vector<2, c>(
-							p0, p1+0.5, p2);
+			const double lenD = vector_length(
+				normalized_contravariant_basic_vector<2, c>({p0, p1+0.5, p2}));
 
 			// position of B1(i',j,k-1/2)
 			const int lA = k-1 + (N2-1)*(i + (N0-1)*j);

@@ -11,12 +11,9 @@
 
 extern double dt;
 
-void get_othnomal_cmpo_elect(
-		double *EX, double *EY, double *EZ,
-		const double *EP, const double *EQ, const double *ER);
-
-void get_othnomal_cmpo_magnt(
-		double *BX, double *BY, double *BZ,
+struct vector othnomal_electric_field(int i, int j, int k,
+		const double *Ep, const double *Eq, const double *Er);
+struct vector othnomal_magnetic_flux(int i, int j, int k,
 		const double *BP, const double *BQ, const double *BR);
 
 int output_grid(int nt);
@@ -26,14 +23,12 @@ int output(const double *Ep, const double *Eq, const double *Er,
            int nt)
 {
 	// The order of values is as (0,0,0)(1,0,0)(0,1,0)(1,1,0)(0,0,1)...
-	double *EBX = (double *)malloc(NP*NQ*NR*sizeof(double));
-	double *EBY = (double *)malloc(NP*NQ*NR*sizeof(double));
-	double *EBZ = (double *)malloc(NP*NQ*NR*sizeof(double));
+	float *EBX = (float *)malloc(NP*NQ*NR*sizeof(float));
+	float *EBY = (float *)malloc(NP*NQ*NR*sizeof(float));
+	float *EBZ = (float *)malloc(NP*NQ*NR*sizeof(float));
 
-	float *F = (float *)malloc(NP*NQ*NR*sizeof(float));
-
-	if (EBX == NULL || EBY == NULL || EBZ == NULL || F == NULL) {
-		free(EBX); free(EBY); free(EBZ); free(F);
+	if (EBX == NULL || EBY == NULL || EBZ == NULL) {
+		free(EBX); free(EBY); free(EBZ);
 		return ENOMEM;
 	}
 
@@ -53,7 +48,7 @@ int output(const double *Ep, const double *Eq, const double *Er,
 	// Output electric field
 
 	if (sprintf(fpath, "%s/%08dE", outpath, nt) == EOF) {
-		free(EBX); free(EBY); free(EBZ); free(F);
+		free(EBX); free(EBY); free(EBZ);
 		return ENAMETOOLONG;
 	}
 
@@ -68,23 +63,26 @@ int output(const double *Ep, const double *Eq, const double *Er,
 	if (write(fd, &nt,    sizeof(int))    == -1) goto err;
 	if (write(fd, &t,     sizeof(float))  == -1) goto err;
 
-	get_othnomal_cmpo_elect(EBX, EBY, EBZ, Ep, Eq, Er);
+	for (int k; k < NR; k++)
+	for (int j; j < NQ; j++)
+	for (int i; i < NP; i++) {
+		int l = i + NP*(j + NQ*k);
+		struct vector e = othnomal_electric_field(i, j, k, Ep, Eq, Er);
+		EBX[l] = (float)e._0;
+		EBY[l] = (float)e._1;
+		EBZ[l] = (float)e._2;
+	}
 
-	for (int i; i < NP*NQ*NR; i++) F[i] = (float)EBX[i];
-	if (write(fd, F, NP*NQ*NR*sizeof(float)) == -1) goto err;
-
-	for (int i; i < NP*NQ*NR; i++) F[i] = (float)EBY[i];
-	if (write(fd, F, NP*NQ*NR*sizeof(float)) == -1) goto err;
-
-	for (int i; i < NP*NQ*NR; i++) F[i] = (float)EBZ[i];
-	if (write(fd, F, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	if (write(fd, EBX, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	if (write(fd, EBY, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	if (write(fd, EBZ, NP*NQ*NR*sizeof(float)) == -1) goto err;
 
 	close(fd);
 
 	// Output magnetic flux densities
 
 	if (sprintf(fpath, "%s/%08dB", outpath, nt) == EOF) {
-		free(EBX); free(EBY); free(EBZ); free(F);
+		free(EBX); free(EBY); free(EBZ);
 		return ENAMETOOLONG;
 	}
 
@@ -99,19 +97,22 @@ int output(const double *Ep, const double *Eq, const double *Er,
 	if (write(fd, &nt,    sizeof(int))    == -1) goto err;
 	if (write(fd, &t,     sizeof(float))  == -1) goto err;
 
-	get_othnomal_cmpo_magnt(EBX, EBY, EBZ, BP, BQ, BR);
+	for (int k; k < NR; k++)
+	for (int j; j < NQ; j++)
+	for (int i; i < NP; i++) {
+		int l = i + NP*(j + NQ*k);
+		struct vector b = othnomal_magnetic_flux(i, j, k, BP, BQ, BR);
+		EBX[l] = (float)b._0;
+		EBY[l] = (float)b._1;
+		EBZ[l] = (float)b._2;
+	}
 
-	for (int i; i < NP*NQ*NR; i++) F[i] = (float)EBX[i];
-	if (write(fd, F, NP*NQ*NR*sizeof(float)) == -1) goto err;
-
-	for (int i; i < NP*NQ*NR; i++) F[i] = (float)EBY[i];
-	if (write(fd, F, NP*NQ*NR*sizeof(float)) == -1) goto err;
-
-	for (int i; i < NP*NQ*NR; i++) F[i] = (float)EBZ[i];
-	if (write(fd, F, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	if (write(fd, EBX, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	if (write(fd, EBY, NP*NQ*NR*sizeof(float)) == -1) goto err;
+	if (write(fd, EBZ, NP*NQ*NR*sizeof(float)) == -1) goto err;
 
 	close(fd);
-	free(EBX); free(EBY); free(EBZ); free(F);
+	free(EBX); free(EBY); free(EBZ);
 
 	// Output grid data only at initialization.
 	if (nt == 0) return output_grid(nt);
@@ -131,7 +132,7 @@ int output_grid(int nt) {
 	float *Y = (float *)malloc(NP*NQ*NR*sizeof(float));
 	float *Z = (float *)malloc(NP*NQ*NR*sizeof(float));
 
-	if (X == NULL || Y == NULL || Z == NULL ) {
+	if (X == NULL || Y == NULL || Z == NULL) {
 		free(X); free(Y); free(Z);
 		return ENOMEM;
 	}
@@ -166,10 +167,12 @@ int output_grid(int nt) {
 	for (int r = 0; r < NR; r++)
 	for (int q = 0; q < NQ; q++)
 	for (int p = 0; p < NP; p++) {
-		const int l = p + NP*(q+NQ*r);
-		X[l] = (float)othnormal_position<0, 0>(p, q, r);
-		Y[l] = (float)othnormal_position<1, 0>(p, q, r);
-		Z[l] = (float)othnormal_position<2, 0>(p, q, r);
+		const int l = p + NP*(q + NQ*r);
+		struct vector position =
+				othnormal_position<0>({(double)p, (double)q, (double)r});
+		X[l] = (float)position._0;
+		Y[l] = (float)position._1;
+		Z[l] = (float)position._2;
 	}
 
 	if (write(fd, X, NP*NQ*NR*sizeof(float)) == -1) goto err;
