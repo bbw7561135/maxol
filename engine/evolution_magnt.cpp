@@ -8,38 +8,39 @@
 extern double dt;
 
 /*
- * I integrate magnetic flux density in a surface element like the square
- * EFGH; and countour-integrate electric field along the edge of it.
+ * I integrate magnetic flux density in a surface element like ###;
+ * and countour-integrate electric fields along the edge of it.
+ * Magnetic flux density is represented by the value at the center of
+ * surface element.
+ * Electric fields are represented by the center of each edge.
  *
- * The surface element is not along the computational grid because it is along
- * contravariant basic vectors of the coordinate system.
- * It is vertical to the grid. In the figure, AB, DC are vertical with EH, FG;
- * and AD, BC are vertical with EF, HG. Additionally, EFGH is vertical with the
- * r-axis.
+ *            q=j-1/2   q=j+1/2
+ *              /         /
+ *      -------+---------+--- r=k-1/2
+ *            / # # # # /
+ *           / # # # # /
+ *          / # # # # /
+ *      ---+---------+------- r=k+1/2
+ *        /         /
  *
- * The edges of surface element is on the points: I, J, K, L, where electric
- * field vectors are put.
+ * Vewing from r-axis, the surface element is like ===. The allow vertical to
+ * the surface element is the magnetic flux density vector to be evoluted. The
+ * * points and the --> allow mean electric field vectors to be countour-
+ * integrated.
  *
- *              p-1/2
- *     H |._     /                      p+1/2
- *       |  `-._/                        /
- *       |     /`-._                    /
- *       |  D /     `-._  K            /
- *       |   +----------`+._----------+------- q-1/2
- *       |  /               `-._  G  / C
- *       | /                    `-. /
- *       |/                       |/
- *     L +                        + J
- *      /|                       /|
- *     / `-._                   / |
- *    /  E   `-._              /  |
- * A +-----------`+._---------+---|--- q+1/2
- *               I   `-._      B  |
- *                       `-._     |
- *                           `-._ |
- *                               `| F
+ *           q=j-1        q=j        q=j+1
+ *            /           /           /
+ *           +-----------+-----------+-- p=i-1/2
+ *          /         ^ /           /
+ *         /          |/           /
+ *        /     *===========*     /
+ *       /           /-->        /
+ *      /           /           /
+ *     +-----------+-----------+-- p=i+1/2
  *
- * As evoluting BP(i,j',k'), definition of variable is below.
+ * ----------------------------------------------------------------------------
+ *
+ * As evoluting B(i,j',k'), definition of variable is below.
  *
  *                       lenA
  *                  <----------->
@@ -96,7 +97,7 @@ extern double dt;
 template <int c, int N0, int N1, int N2>
 static double __evolute_magnt(double *B, const double *E1, const double *E2)
 {
-	// total energy of magnetic field
+	// total energy about a component of magnetic field
 	double eng = 0.0;
 
 	// Extract for-loop for vectorization.
@@ -109,8 +110,7 @@ static double __evolute_magnt(double *B, const double *E1, const double *E2)
 		const double p0 = (double)i;
 		const double p2 = (double)k + 0.5;
 
-		// Calculate intD previously
-		// because we cannot reuse it at the first loop.
+		// Calculate intD previously because cannot reuse it at the first loop.
 
 		// length of the edge (i,1,k')
 		const double lenD =
@@ -125,7 +125,7 @@ static double __evolute_magnt(double *B, const double *E1, const double *E2)
 			/*
 			 * The volume equals to Jacobian.
 			 *   +-----+    ^
-			 *  / \   / \   | 1 / (length of covariant basic vector)
+			 *  / \   / \   | 1.0 / (length of contravariant basic vector)
 			 * +-----+   \  |
 			 *  \   +-\---+ v
 			 *   \ / dS\ /
@@ -133,20 +133,17 @@ static double __evolute_magnt(double *B, const double *E1, const double *E2)
 			 */
 			const double jcb = jacobian<c>(p0, p1, p2);
 			const double dS =
-					jcb * len_of_covariant_basic_vector<c, c>(p0, p1, p2);
+					jcb * len_of_contravariant_basic_vector<c, c>(p0, p1, p2);
 
 			// length of the edge (i,j',k'-1/2)
 			const double lenA =
-					len_of_normalized_contravariant_basic_vector<1, c>(
-							p0, p1, p2-0.5);
+					len_of_covariant_basic_vector<1, c>(p0, p1, p2-0.5);
 			// length of the edge (i,j',k'+1/2)
 			const double lenB =
-					len_of_normalized_contravariant_basic_vector<1, c>(
-							p0, p1, p2+0.5);
+					len_of_covariant_basic_vector<1, c>(p0, p1, p2+0.5);
 			// length of the edge (i,j'+1/2,k')
 			const double lenD =
-					len_of_normalized_contravariant_basic_vector<2, c>(
-							p0, p1+0.5, p2);
+					len_of_covariant_basic_vector<2, c>(p0, p1+0.5, p2);
 
 			// position of E1(i,j',k'-1/2)
 			const int lA = k-1 + N2*(i+ N0*j);
@@ -170,7 +167,7 @@ static double __evolute_magnt(double *B, const double *E1, const double *E2)
 			const double B_new = B[l] - dt * oint / dS;
 			B[l] = B_new;
 
-			// Add energy in the grid
+			// Sum up energy in the grid
 			eng += 0.5 / magnetic_permeability * B_new * B_new * jcb;
 		}
 	}

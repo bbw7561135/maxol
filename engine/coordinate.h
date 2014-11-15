@@ -227,59 +227,6 @@ double len_of_contravariant_basic_vector(double p, double q, double r)
 	return sqrt(contravariant_metric_tensor<c, c, d>(p, q, r));
 }
 
-// p, q, r -> dx/dP
-static inline double dx_dP(double p, double q, double r)
-{
-	return pow(jacobian<0>(p, q, r), 2.0/3.0) * dp_dx(p, q, r);
-}
-
-// p, q, r -> dy/dP
-static inline double dy_dP(double p, double q, double r)
-{
-	return pow(jacobian<0>(p, q, r), 2.0/3.0) * dp_dy(p, q, r);
-}
-
-// p, q, r -> dz/dP
-static inline double dz_dP(double p, double q, double r)
-{
-	return pow(jacobian<0>(p, q, r), 2.0/3.0) * dp_dz(p, q, r);
-}
-
-// p, q, r -> dx/dQ
-static inline double dx_dQ(double p, double q, double r)
-{
-	return pow(jacobian<0>(p, q, r), 2.0/3.0) * dq_dx(p, q, r);
-}
-
-// p, q, r -> dy/dQ
-static inline double dy_dQ(double p, double q, double r)
-{
-	return pow(jacobian<0>(p, q, r), 2.0/3.0) * dq_dy(p, q, r);
-}
-
-// p, q, r -> dz/dQ
-static inline double dz_dQ(double p, double q, double r)
-{
-	return pow(jacobian<0>(p, q, r), 2.0/3.0) * dq_dz(p, q, r);
-}
-
-// p, q, r -> dx/dR
-static inline double dx_dR(double p, double q, double r)
-{
-	return pow(jacobian<0>(p, q, r), 2.0/3.0) * dr_dx(p, q, r);
-}
-
-// p, q, r -> dy/dR
-static inline double dy_dR(double p, double q, double r)
-{
-	return pow(jacobian<0>(p, q, r), 2.0/3.0) * dr_dy(p, q, r);
-}
-
-// p, q, r -> dz/dR
-static inline double dz_dR(double p, double q, double r)
-{
-	return pow(jacobian<0>(p, q, r), 2.0/3.0) * dr_dz(p, q, r);
-}
 /*
  * contravariant basic vectors normalized to the same size as
  * covariant basic vectors:
@@ -291,19 +238,21 @@ template <int cx, int cp, int d>
 double normalized_contravariant_basic_vector(double p, double q, double r)
 {
 	swap<d>(&p, &q, &r);
+	double coefficient = pow(jacobian<0>(p, q, r), 2.0/3.0);
+
 	switch (cx%3 + 3*(cp%3)) {
-	// P
-	case 0: return dx_dP(p, q, r);
-	case 1: return dy_dP(p, q, r);
-	case 2: return dz_dP(p, q, r);
-	// Q
-	case 3: return dx_dQ(p, q, r);
-	case 4: return dy_dQ(p, q, r);
-	case 5: return dz_dQ(p, q, r);
-	// R
-	case 6: return dx_dR(p, q, r);
-	case 7: return dy_dR(p, q, r);
-	case 8: return dz_dR(p, q, r);
+	// p
+	case 0: return coefficient * dx_dp(p, q, r);
+	case 1: return coefficient * dy_dp(p, q, r);
+	case 2: return coefficient * dz_dp(p, q, r);
+	// q
+	case 3: return coefficient * dx_dq(p, q, r);
+	case 4: return coefficient * dy_dq(p, q, r);
+	case 5: return coefficient * dz_dq(p, q, r);
+	// r
+	case 6: return coefficient * dx_dr(p, q, r);
+	case 7: return coefficient * dy_dr(p, q, r);
+	case 8: return coefficient * dz_dr(p, q, r);
 	}
 }
 

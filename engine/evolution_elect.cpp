@@ -9,20 +9,58 @@
 extern double dt;
 
 /*
- * I integrate electric field in a surface element like ###;
- * and countour-integrate magnetic flux density along the edge of it.
- * Electric field is represented by the value at the center of
- * surface element.
- * Magnetic flux densities are represented by the center of each edge.
+ * I integrate electric field in a surface element like the square
+ * EFGH; and countour-integrate magnetic flux densities along the edge of it.
  *
- *             p-1/2     p+1/2
- *              /         /
- *      -------+---------+--- q-1/2
- *            / # # # # /
- *           / # # # # /
- *          / # # # # /
- *      ---+---------+------- q+1/2
- *        /         /
+ * The surface element is not along computational grid, but it is along
+ * contravariant basic vectors of the coordinate system.
+ * It is vertical to the grid. In the figure, AB, DC are vertical with EH, FG;
+ * and AD, BC are vertical with EF, HG. Additionally, EFGH is vertical with the
+ * p-axis.
+ *
+ * The edges of surface element is on the points: I, J, K, L, where electric
+ * field vectors are put.
+ *
+ *             q=j-1/2
+ *     H |._     /                     q=j+1/2
+ *       |  `-._/                        /
+ *       |     /`-._                    /
+ *       |  D /     `-._  K            /
+ *       |   +----------`+._----------+------- r=k-1/2
+ *       |  /               `-._  G  / C
+ *       | /                    `-. /
+ *       |/                       |/
+ *     L +                        + J
+ *      /|                       /|
+ *     / `-._                   / |
+ *    /  E   `-._              /  |
+ * A +-----------`+._---------+---|--- r=k+1/2
+ *               I   `-._      B  |
+ *                       `-._     |
+ *                           `-._ |
+ *                               `| F
+ *
+ * Viewing from r-axis, the surface element is like [. The --> allow is the
+ * magnetic flux density vector to be evoluted. The * points and the --> allow
+ * mean electric field vectors to be countour-integrated.
+ *
+ * On the * points, electric fields vector is not defined. I substitute
+ * electric fields on + points.
+ *
+ *                 p=i
+ *                  /
+ *      -------*---+--- q=j-1/2
+ *             [  /
+ *            ^[ /
+ *            |[/
+ *             [-->
+ *            /[
+ *           / [
+ *          /  [
+ *      ---+---*------- q=j+1/2
+ *        /
+ *
+ * ----------------------------------------------------------------------------
  *
  * As evoluting E(i',j,k), definition of variable is below.
  *
@@ -71,11 +109,11 @@ extern double dt;
 template <int c, int N0, int N1, int N2>
 static double __evolute_elect(double *E, const double *B1, const double *B2)
 {
-	// total energy of electric field
+	// total energy about a component of electric field
 	double eng = 0.0;
 
 	// Extract for-loop for vectorization.
-	// Don't extract inner loop because a value intD is reused.
+	// Don't extract inner loop because reuse a value: intD.
 	// for i: 0 ~ N0-2, for k: 1 ~ N2-2
 	for (int ik = 0; ik < (N2-2)*(N0-1); ik++) {
 		const int i = ik / (N2-2);
@@ -86,7 +124,7 @@ static double __evolute_elect(double *E, const double *B1, const double *B2)
 		const double p0 = (double)i + 0.5;
 		const double p2 = (double)k;
 
-		// Calculate intD previously because we cannot reuse it at the first loop.
+		// Calculate intD previously because cannot reuse it at the first loop.
 
 		// length of the edge (i',3/2,k)
 		const double lenD = len_of_covariant_basic_vector<2, c>(p0, 1.5, p2);
@@ -99,7 +137,7 @@ static double __evolute_elect(double *E, const double *B1, const double *B2)
 			/*
 			 * The volume equals to Jacobian.
 			 *   +-----+    ^
-			 *  / \   / \   | 1 / (length of contravariant basic vector)
+			 *  / \   / \   | length of covariant basic vector
 			 * +-----+   \  |
 			 *  \   +-\---+ v
 			 *   \ / dS\ /
@@ -107,17 +145,20 @@ static double __evolute_elect(double *E, const double *B1, const double *B2)
 			 */
 			const double jcb = jacobian<c>(p0, p1, p2);
 			const double dS =
-					jcb * len_of_contravariant_basic_vector<c, c>(p0, p1, p2);
+					jcb / len_of_covariant_basic_vector<c, c>(p0, p1, p2);
 
 			// length of the edge (i',j,k-1/2)
 			const double lenA =
-					len_of_covariant_basic_vector<1, c>(p0, p1, p2-0.5);
+					len_of_normalized_contravariant_basic_vector<1, c>(
+							p0, p1, p2-0.5);
 			// length of the edge (i',j,k+1/2)
 			const double lenB =
-					len_of_covariant_basic_vector<1, c>(p0, p1, p2+0.5);
+					len_of_normalized_contravariant_basic_vector<1, c>(
+							p0, p1, p2+0.5);
 			// length of the edge (i',j+1/2,k)
 			const double lenD =
-					len_of_covariant_basic_vector<2, c>(p0, p1+0.5, p2);
+					len_of_normalized_contravariant_basic_vector<2, c>(
+							p0, p1+0.5, p2);
 
 			// position of B1(i',j,k-1/2)
 			const int lA = k-1 + (N2-1)*(i + (N0-1)*j);
@@ -137,13 +178,13 @@ static double __evolute_elect(double *E, const double *B1, const double *B2)
 
 			// position of E(i',j,k)
 			const int l = j + N1*(k + N2*i);
-			// Ampère's circuital law. Omitting electric current term.
+			// Ampere's circuital law. Omitting electric current term.
 			const double E_new = E[l] +
 					1.0 / (magnetic_permeability * electric_permittivity) *
 					dt * oint / dS;
 			E[l] = E_new;
 
-			// Add energy in the grid
+			// Sum up energy in the grid
 			eng += 0.5 * electric_permittivity * E_new * E_new * jcb;
 		}
 	}
@@ -153,7 +194,7 @@ static double __evolute_elect(double *E, const double *B1, const double *B2)
 
 /*
  * Evolute electric fields with leap-frog method
- * following Ampère's circuital law.
+ * following Ampere's circuital law.
  * NOTICE:  Now I omit electric current term.
  */
 double evolute_elect(
