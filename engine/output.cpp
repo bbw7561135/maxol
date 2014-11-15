@@ -63,9 +63,9 @@ int output(const double *Ep, const double *Eq, const double *Er,
 	if (write(fd, &nt,    sizeof(int))    == -1) goto err;
 	if (write(fd, &t,     sizeof(float))  == -1) goto err;
 
-	for (int k; k < NR; k++)
-	for (int j; j < NQ; j++)
-	for (int i; i < NP; i++) {
+	for (int k = 0; k < NR; k++)
+	for (int j = 0; j < NQ; j++)
+	for (int i = 0; i < NP; i++) {
 		int l = i + NP*(j + NQ*k);
 		struct vector e = othnomal_electric_field(i, j, k, Ep, Eq, Er);
 		EBX[l] = (float)e._0;
@@ -97,9 +97,9 @@ int output(const double *Ep, const double *Eq, const double *Er,
 	if (write(fd, &nt,    sizeof(int))    == -1) goto err;
 	if (write(fd, &t,     sizeof(float))  == -1) goto err;
 
-	for (int k; k < NR; k++)
-	for (int j; j < NQ; j++)
-	for (int i; i < NP; i++) {
+	for (int k = 0; k < NR; k++)
+	for (int j = 0; j < NQ; j++)
+	for (int i = 0; i < NP; i++) {
 		int l = i + NP*(j + NQ*k);
 		struct vector b = othnomal_magnetic_flux(i, j, k, BP, BQ, BR);
 		EBX[l] = (float)b._0;

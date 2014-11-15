@@ -73,17 +73,21 @@ struct vector othnomal_electric_field(int i, int j, int k,
 	// interpolate with r direction
 	e._2 = interpolate2<NR, NP*NQ>(Er, k, l2);
 
-	const struct vector c0 = covariant_basic_vector<0, 0>(pos);
-	const struct vector c1 = covariant_basic_vector<1, 0>(pos);
-	const struct vector c2 = covariant_basic_vector<2, 0>(pos);
+	const struct vector dp = covariant_basic_vector<0, 0>(pos);
+	const struct vector dq = covariant_basic_vector<1, 0>(pos);
+	const struct vector dr = covariant_basic_vector<2, 0>(pos);
 
 	// Convert to unphysical component.
-	e._0 /= vector_length(c0);
-	e._1 /= vector_length(c1);
-	e._2 /= vector_length(c2);
+	e._0 /= vector_length(dp);
+	e._1 /= vector_length(dq);
+	e._2 /= vector_length(dr);
+
+	const struct vector dx = {dp._0, dq._0, dr._0};
+	const struct vector dy = {dp._1, dq._1, dr._1};
+	const struct vector dz = {dp._2, dq._2, dr._2};
 
 	// coordinate transformation
-	return {inner_product(e, c0), inner_product(e, c1), inner_product(e, c2)};
+	return {inner_product(e, dx), inner_product(e, dy), inner_product(e, dz)};
 }
 
 struct vector othnomal_magnetic_flux(int i, int j, int k,
@@ -116,15 +120,19 @@ struct vector othnomal_magnetic_flux(int i, int j, int k,
 	// interpolate with p-q surface
 	b._2 = interpolate4<NP, NQ, 1, NP-1>(BR, i, j, l2);
 
-	const struct vector c0 = contravariant_basic_vector<0, 0>(pos);
-	const struct vector c1 = contravariant_basic_vector<1, 0>(pos);
-	const struct vector c2 = contravariant_basic_vector<2, 0>(pos);
+	const struct vector dp = contravariant_basic_vector<0, 0>(pos);
+	const struct vector dq = contravariant_basic_vector<1, 0>(pos);
+	const struct vector dr = contravariant_basic_vector<2, 0>(pos);
 
 	// Convert to unphysical component.
-	b._0 /= vector_length(c0);
-	b._1 /= vector_length(c1);
-	b._2 /= vector_length(c2);
+	b._0 /= vector_length(dp);
+	b._1 /= vector_length(dq);
+	b._2 /= vector_length(dr);
+
+	const struct vector dx = {dp._0, dq._0, dr._0};
+	const struct vector dy = {dp._1, dq._1, dr._1};
+	const struct vector dz = {dp._2, dq._2, dr._2};
 
 	// coordinate transformation
-	return {inner_product(b, c0), inner_product(b, c1),	inner_product(b, c2)};
+	return {inner_product(b, dx), inner_product(b, dy), inner_product(b, dz)};
 }
