@@ -9,6 +9,12 @@
 extern double dt;
 
 /*
+ * Discretize the integral form of the Ampere's equation which is like below:
+ *   _             __                ->
+ *  / ->  ->      //  ->            @E    ->
+ *  O B *dr = \mu || (j + \epsilon ----)*dS
+ * _/A           _//A               @t
+ *
  * I integrate electric field in a surface element like the square
  * EFGH; and countour-integrate magnetic flux densities along the edge of it.
  *

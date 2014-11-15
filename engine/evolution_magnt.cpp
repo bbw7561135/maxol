@@ -8,6 +8,12 @@
 extern double dt;
 
 /*
+ * Discretize the integral form of the Faraday's equation which is like below:
+ *   _           __  ->
+ *  / ->  ->    //  @E   ->
+ *  O E *dr = - || ----*dS
+ * _/A         _//A @t
+ *
  * I integrate magnetic flux density in a surface element like ###;
  * and countour-integrate electric fields along the edge of it.
  * Magnetic flux density is represented by the value at the center of
@@ -163,7 +169,7 @@ static double __evolute_magnt(double *B, const double *E1, const double *E2)
 
 			// position of B(i,j',k')
 			const int l = j + (N1-1)*(k + (N2-1)*i);
-			// Maxwell–Faraday equation
+			// Faraday's equation
 			const double B_new = B[l] - dt * oint / dS;
 			B[l] = B_new;
 
