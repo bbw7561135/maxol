@@ -2,6 +2,8 @@
 #include "../config/comp_param.h"
 #include "../config/my_bound_cond.h"
 
+// TODO: Some bugs might be in boundary condition.
+
 /*
  *                / A
  *           F   L
@@ -16,37 +18,56 @@
  *           ^
  *           | C
  *
+ * case c == 0: bound(A,B,C,D,E,F) -> bound(0,1,2,3,4,5)
+ * case c == 1: bound(A,B,C,D,E,F) -> bound(1,2,0,4,5,3)
+ * case c == 2: bound(A,B,C,D,E,F) -> bound(2,0,1,5,3,4)
  */
-
-template <int c, int b>
-static double elect_val_on_bound(struct vector pos, const double *E)
+template <int c>
+static inline double elect_val_on_bound_B(struct vector pos, const double *E)
 {
 	pos = swap<c>(pos);
 
-	/*
-	 * case c == 0: bound(A,B,C,D,E,F) -> bound(0,1,2,3,4,5)
-	 * case c == 1: bound(A,B,C,D,E,F) -> bound(1,2,0,4,5,3)
-	 * case c == 2: bound(A,B,C,D,E,F) -> bound(2,0,1,5,3,4)
-	 */
-	switch(c + 3*b){
-	// bound B
-	case 3:  return bound_cond_elect_p1(pos._2, pos._0, E);
-	case 4:  return bound_cond_elect_q2(pos._0, pos._1, E);
-	case 5:  return bound_cond_elect_r3(pos._1, pos._2, E);
-	// Bound C
-	case 6:  return bound_cond_elect_p2(pos._0, pos._1, E);
-	case 7:  return bound_cond_elect_q0(pos._1, pos._2, E);
-	case 8:  return bound_cond_elect_r1(pos._2, pos._0, E);
-	// Bound E
-	case 12: return bound_cond_elect_p4(pos._2, pos._0, E);
-	case 13: return bound_cond_elect_q5(pos._0, pos._1, E);
-	case 14: return bound_cond_elect_r3(pos._1, pos._2, E);
-	// Bound F
-	case 15: return bound_cond_elect_p5(pos._0, pos._1, E);
-	case 16: return bound_cond_elect_q3(pos._1, pos._2, E);
-	case 17: return bound_cond_elect_r4(pos._2, pos._0, E);
+	switch(c%3){
+	case 0:  return bound_cond_elect_p1(pos._2, pos._0, E);
+	case 1:  return bound_cond_elect_q2(pos._0, pos._1, E);
+	case 2:  return bound_cond_elect_r3(pos._1, pos._2, E);
 	}
-	assert(0);
+}
+
+template <int c>
+static inline double elect_val_on_bound_C(struct vector pos, const double *E)
+{
+	pos = swap<c>(pos);
+
+	switch(c%3){
+	case 0:  return bound_cond_elect_p2(pos._0, pos._1, E);
+	case 1:  return bound_cond_elect_q0(pos._1, pos._2, E);
+	case 2:  return bound_cond_elect_r1(pos._2, pos._0, E);
+	}
+}
+
+template <int c>
+static inline double elect_val_on_bound_E(struct vector pos, const double *E)
+{
+	pos = swap<c>(pos);
+
+	switch(c%3){
+	case 0: return bound_cond_elect_p4(pos._2, pos._0, E);
+	case 1: return bound_cond_elect_q5(pos._0, pos._1, E);
+	case 2: return bound_cond_elect_r3(pos._1, pos._2, E);
+	}
+}
+
+template <int c>
+static inline double elect_val_on_bound_F(struct vector pos, const double *E)
+{
+	pos = swap<c>(pos);
+
+	switch(c%3){
+	case 0: return bound_cond_elect_p5(pos._0, pos._1, E);
+	case 1: return bound_cond_elect_q3(pos._1, pos._2, E);
+	case 2: return bound_cond_elect_r4(pos._2, pos._0, E);
+	}
 }
 
 template <int c, int N0, int N1, int N2>
@@ -59,26 +80,26 @@ static void __bound_cond_elect(double *E)
 			// Bound C
 			const int k0 = 0;
 			const int l0 = j + N1*(k0 + N2*i);
-			E[l0] = elect_val_on_bound<c, 2>(
+			E[l0] = elect_val_on_bound_C<c>(
 					{(double)i, (double)j, (double)k0}, E);
 
 			// Bound F
 			const int k1 = N2-1;
 			const int l1 = j + N1*(k1 + N2*i);
-			E[l1] = elect_val_on_bound<c, 5>(
+			E[l1] = elect_val_on_bound_F<c>(
 					{(double)i, (double)j, (double)k1}, E);
 		}
 		for (int k = 0; k < N2; k++) {
 			// Bound B
 			const int j0 = 0;
 			const int l0 = j0 + N1*(k + N2*i);
-			E[l0] = elect_val_on_bound<c, 1>(
+			E[l0] = elect_val_on_bound_B<c>(
 					{(double)i, (double)j0, (double)k}, E);
 
 			// Bound E
 			const int j1 = N1-1;
 			const int l1 = j1 + N1*(k + N2*i);
-			E[l1] = elect_val_on_bound<c, 4>(
+			E[l1] = elect_val_on_bound_E<c>(
 					{(double)i, (double)j1, (double)k}, E);
 		}
 	}

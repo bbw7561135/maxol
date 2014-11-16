@@ -2,8 +2,8 @@
  * Edit as you like.
  */
 
-#ifndef CONFIG_MY_BOUND_COND_H_
-#define CONFIG_MY_BOUND_COND_H_
+#ifndef MY_BOUND_COND_H_
+#define MY_BOUND_COND_H_
 
 #include "../engine/coordinate.h"
 
@@ -226,4 +226,4 @@ static inline double bound_cond_elect_q5(int p, int q, const double *E)
 	return E[l - (NR-2)];
 }
 
-#endif /* CONFIG_MY_BOUND_COND_H_ */
+#endif /* MY_BOUND_COND_H_ */
