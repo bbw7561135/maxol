@@ -1,8 +1,8 @@
 #ifndef COMP_PARAM_H_
 #define COMP_PARAM_H_
 
-#define NP 12
-#define NQ 12
-#define NR 12
+#define NP 100
+#define NQ 100
+#define NR 100
 
 #endif /* COMP_PARAM_H_ */

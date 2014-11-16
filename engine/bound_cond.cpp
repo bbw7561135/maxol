@@ -54,7 +54,7 @@ static void __bound_cond_elect(double *E)
 {
 	// tangential components to boundary is zero
 
-	for (int i = 0; i < N0; i++){
+	for (int i = 0; i < N0; i++) {
 		for (int j = 1; j < N1-1; j++) {
 			// Bound C
 			const int k0 = 0;
@@ -78,7 +78,7 @@ static void __bound_cond_elect(double *E)
 			// Bound E
 			const int j1 = N1-1;
 			const int l1 = j1 + N1*(k + N2*i);
-			E[l1] = elect_val_on_bound<c, 1>(
+			E[l1] = elect_val_on_bound<c, 4>(
 					{(double)i, (double)j1, (double)k}, E);
 		}
 	}
