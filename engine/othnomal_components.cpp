@@ -1,4 +1,5 @@
 #include "coordinate.h"
+#include "variable.h"
 #include "vector.h"
 
 // Certainly a conditional branch in for loop is not fast,
@@ -6,36 +7,36 @@
 
 // Linear-extrapolate if on boundary else linear-interpolate.
 template <int N, int NS>
-static double interpolate2(const double *A, int i, int l)
+static double interpolate2(const double *A, int i)
 {
 	switch (i) {
 	// boundary
-	case 0:   return   1.5 * A[l+NS] - 0.5 * A[l+2*NS];
-	case N-1: return - 0.5 * A[l-NS] + 1.5 * A[l];
+	case 0:   return   1.5 * (*A)        - 0.5 * (*(A+NS));
+	case N-1: return - 0.5 * (*(A-2*NS)) + 1.5 * (*(A-NS));
 	// non-boundary
-	default:  return   0.5 * A[l]    + 0.5 * A[l+NS];
+	default:  return   0.5 * (*(A-NS))   + 0.5 * (*A);
 	}
 }
 
 // Linear-extrapolate if on boundary else linear-interpolate.
 template <int N1, int N2, int NS1, int NS2>
-static double interpolate4(const double *A, int i1, int i2, int l)
+static double interpolate4(const double *A, int i1, int i2)
 {
 	double a, b;
 	switch(i1) {
 	// boundary
 	case 0:
-		a = interpolate2<N2, NS2>(A, i2, l+NS1);
-		b = interpolate2<N2, NS2>(A, i2, l+2*NS1);
+		a = interpolate2<N2, NS2>(A,     i2);
+		b = interpolate2<N2, NS2>(A+NS1, i2);
 		return   1.5*a - 0.5*b;
 	case N1-1:
-		a = interpolate2<N2, NS2>(A, i2, l-NS1);
-		b = interpolate2<N2, NS2>(A, i2, l);
+		a = interpolate2<N2, NS2>(A-2*NS1, i2);
+		b = interpolate2<N2, NS2>(A-  NS1, i2);
 		return - 0.5*a + 1.5*b;
 	// non-boundary
 	default:
-		a = interpolate2<N2, NS2>(A, i2, l);
-		b = interpolate2<N2, NS2>(A, i2, l+NS1);
+		a = interpolate2<N2, NS2>(A-NS1, i2);
+		b = interpolate2<N2, NS2>(A,     i2);
 		return   0.5*a + 0.5*b;
 	}
 }
@@ -59,19 +60,19 @@ struct vector othnomal_electric_field(int i, int j, int k,
 	 */
 	const struct vector pos = {(double)i, (double)j, (double)k};
 
-	const int l0 = j + NQ*(k + NR*(i-1));
-	const int l1 = k + NR*(i + NP*(j-1));
-	const int l2 = i + NP*(j + NQ*(k-1));
+	const double *e0 = elect_field<0, NP, NQ, NR>(i, j, k, Ep);
+	const double *e1 = elect_field<1, NP, NQ, NR>(i, j, k, Eq);
+	const double *e2 = elect_field<2, NP, NQ, NR>(i, j, k, Er);
 
 	struct vector e;
 
 	// physical components along to the grids
 	// interpolate with p direction
-	e._0 = interpolate2<NP, NQ*NR>(Ep, i, l0);
+	e._0 = interpolate2<NP, NQ*NR>(e0, i);
 	// interpolate with q direction
-	e._1 = interpolate2<NQ, NR*NP>(Eq, j, l1);
+	e._1 = interpolate2<NQ, NR*NP>(e1, j);
 	// interpolate with r direction
-	e._2 = interpolate2<NR, NP*NQ>(Er, k, l2);
+	e._2 = interpolate2<NR, NP*NQ>(e2, k);
 
 	const struct vector dp = covariant_basic_vector<0, 0>(pos);
 	const struct vector dq = covariant_basic_vector<1, 0>(pos);
@@ -107,18 +108,18 @@ struct vector othnomal_magnetic_flux(int i, int j, int k,
 	 */
 	const struct vector pos = {(double)i, (double)j, (double)k};
 
-	const int l0 = j-1 + (NQ-1)*(k-1 + (NR-1)*i);
-	const int l1 = k-1 + (NR-1)*(i-1 + (NP-1)*j);
-	const int l2 = i-1 + (NP-1)*(j-1 + (NQ-1)*k);
+	const double *b0 = magnt_flux<0, NP, NQ, NR>(i, j, k, BP);
+	const double *b1 = magnt_flux<1, NP, NQ, NR>(i, j, k, BQ);
+	const double *b2 = magnt_flux<2, NP, NQ, NR>(i, j, k, BR);
 
 	struct vector b;
 	// physical components vertical with grids
 	// interpolate with q-r surface
-	b._0 = interpolate4<NQ, NR, 1, NQ-1>(BP, j, k, l0);
+	b._0 = interpolate4<NQ, NR, 1, NQ-1>(b0, j, k);
 	// interpolate with r-p surface
-	b._1 = interpolate4<NR, NP, 1, NR-1>(BQ, k, i, l1);
+	b._1 = interpolate4<NR, NP, 1, NR-1>(b1, k, i);
 	// interpolate with p-q surface
-	b._2 = interpolate4<NP, NQ, 1, NP-1>(BR, i, j, l2);
+	b._2 = interpolate4<NP, NQ, 1, NP-1>(b2, i, j);
 
 	const struct vector dp = contravariant_basic_vector<0, 0>(pos);
 	const struct vector dq = contravariant_basic_vector<1, 0>(pos);

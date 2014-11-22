@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 #include "coordinate.h"
+#include "variable.h"
 #include "../config/comp_param.h"
 #include "../config/phys_param.h"
 
@@ -148,8 +149,7 @@ static double __evolute_elect(double *E, const double *B1, const double *B2)
 		// length of the edge (i',3/2,k)
 		const double lenD = vector_length(
 								covariant_basic_vector<2, c>({p0, 1.5, p2}));
-		const int lD = i + (N0-1)*(1 + (N1-1)*k);
-		double intD = B2[lD]*lenD;
+		double intD = lenD * (*magnt_flux<2, N0, N1, N2>(i, 1, k, B2));
 
 		for (int j = 1; j < N1-1; j++) {
 			const double p1 = (double)j;
@@ -177,29 +177,24 @@ static double __evolute_elect(double *E, const double *B1, const double *B2)
 			const double lenD = vector_length(
 				normalized_contravariant_basic_vector<2, c>({p0, p1+0.5, p2}));
 
-			// position of B1(i',j,k-1/2)
-			const int lA = k-1 + (N2-1)*(i + (N0-1)*j);
-			// position of B1(i',j,k+1/2)
-			const int lB = lA + 1;
-			// position of B2(i',j+1/2,k)
-			const int lD = i + (N0-1)*(j + (N1-1)*k);
-
 			// integral of magnetic flux density along each edge
-			const double intA = B1[lA]*lenA;
-			const double intB = B1[lB]*lenB;
+			const double intA = lenA *
+					(*magnt_flux<1, N0, N1, N2>(i, j, k-1, B1));
+			const double intB = lenB *
+					(*magnt_flux<1, N0, N1, N2>(i, j, k  , B1));
 			const double intC = intD; // reuse from previous loop
-			intD = B2[lD]*lenD;
+			intD = lenD * (*magnt_flux<2, N0, N1, N2>(i, j, k, B2));
 
 			// contour integral of magnetic flux density around surface element
 			const double oint = - intA + intB - intC + intD;
 
-			// position of E(i',j,k)
-			const int l = j + N1*(k + N2*i);
+			// E at (i',j,k)
+			double *e = elect_field<N1, N2>(i, j, k, E);
 			// Ampere's circuital law. Omitting electric current term.
-			const double E_new = E[l] +
+			const double E_new = *e +
 					1.0 / (magnetic_permeability * electric_permittivity) *
 					dt * oint / dS;
-			E[l] = E_new;
+			*e = E_new;
 
 			// Sum up energy in the grid
 			eng += 0.5 * electric_permittivity * E_new * E_new * jcb;

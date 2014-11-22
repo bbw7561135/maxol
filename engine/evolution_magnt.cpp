@@ -2,6 +2,7 @@
 #include <math.h>
 
 #include "coordinate.h"
+#include "variable.h"
 #include "../config/comp_param.h"
 #include "../config/phys_param.h"
 
@@ -121,8 +122,7 @@ static double __evolute_magnt(double *B, const double *E1, const double *E2)
 		// length of the edge (i,1,k')
 		const double lenD = vector_length(
 				covariant_basic_vector<2, c>({p0, 1.0, p2}));
-		const int lD = i + N0*(1 + N1*k);
-		double intD = E2[lD]*lenD;
+		double intD = lenD * (*elect_field<2, N0, N1, N2>(i, 1, k, E2));
 
 		// for j': 0.5 ~ N1-1.5
 		for (int j = 0; j < N1-1; j++) {
@@ -151,27 +151,22 @@ static double __evolute_magnt(double *B, const double *E1, const double *E2)
 			const double lenD = vector_length(
 					covariant_basic_vector<2, c>({p0, p1+0.5, p2}));
 
-			// position of E1(i,j',k'-1/2)
-			const int lA = k-1 + N2*(i+ N0*j);
-			// position of E1(i,j',k'+1/2)
-			const int lB = lA + 1;
-			// position of E2(i,j'+1/2,k')
-			const int lD = i + N0*(j + N1*k);
-
 			// integral of electric field along each edge
-			const double intA = E1[lA]*lenA;
-			const double intB = E1[lB]*lenB;
+			const double intA = lenA *
+					(*elect_field<1, N0, N1, N2>(i, j, k-1, E1));
+			const double intB = lenB *
+					(*elect_field<1, N0, N1, N2>(i, j, k  , E1));
 			const double intC = intD; // reuse from previous loop
-			intD = E2[lD]*lenD;
+			intD = lenD * (*elect_field<2, N0, N1, N2>(i, j, k, E2));
 
 			// contour integral of electric field around surface element
 			const double oint = - intA + intB - intC +  intD;
 
-			// position of B(i,j',k')
-			const int l = j + (N1-1)*(k + (N2-1)*i);
+			// B at (i,j',k')
+			double *b = magnt_flux<N1, N2>(i, j, k, B);
 			// Faraday's equation
-			const double B_new = B[l] - dt * oint / dS;
-			B[l] = B_new;
+			const double B_new = *b - dt * oint / dS;
+			*b = B_new;
 
 			// Sum up energy in the grid
 			eng += 0.5 / magnetic_permeability * B_new * B_new * jcb;
