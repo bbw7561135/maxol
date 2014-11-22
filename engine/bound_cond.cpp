@@ -86,16 +86,20 @@ void bound_cond_elect(double *Ep, double *Eq, double *Er)
 template <int c, int N0, int N1, int N2>
 static void __bound_cond_magnt(double *B)
 {
-	// vertical component to boundary is zero
+	// Extrapolate.
 	for (int k = 0; k < N2-1; k++)
 		for (int j = 0; j < N1-1; j++) {
 			// Bound A
 			const int i0 = 0;
-			*magnt_flux<N1, N2>(i0, j, k, B) = 0.0;
+			*magnt_flux<N1, N2>(i0, j, k, B) =
+					(*magnt_flux<N1, N2>(i0 + 1, j, k, B)) * 2.0 -
+					(*magnt_flux<N1, N2>(i0 + 2, j, k, B));
 
 			// Bound D
 			const int i1 = N0-1;
-			*magnt_flux<N1, N2>(i1, j, k, B) = 0.0;
+			*magnt_flux<N1, N2>(i1, j, k, B) =
+					(*magnt_flux<N1, N2>(i1 - 1, j, k, B)) * 2.0 -
+					(*magnt_flux<N1, N2>(i1 - 2, j, k, B));
 		}
 }
 

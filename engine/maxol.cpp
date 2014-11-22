@@ -152,7 +152,7 @@ int main(int argc, char **argv)
 		double eng_magnt = evolute_magnt(BP, BQ, BR, Ep, Eq, Er);
 
 		// Boundary condition of magnet flux is not required.
-		// bound_cond_magnt(BP, BQ, BR);
+		bound_cond_magnt(BP, BQ, BR);
 
 		double eng_elect = evolute_elect(Ep, Eq, Er, BP, BQ, BR);
 
