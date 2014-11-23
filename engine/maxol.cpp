@@ -139,9 +139,18 @@ int main(int argc, char **argv)
 
 	clock_t start_clk = clock(); // ignore err;
 
-	fprintf(stdout, "cpu_time	nt	time	electric_energy	magnet_energy\n");
-	fprintf(stdout, "%d	%d	%E	%E	%E\n",
+	fprintf(stdout, "cpu_time	nt	time	electric_energy	magnetic_energy");
+	fprintf(stdout, "	momemtum_x	momemtum_y	momentum_z");
+	fprintf(stdout, "	div_electric	div_magnetic");
+	fprintf(stdout, "\n");
+	fprintf(stdout, "%d	%d	%E	%E	%E",
 			cpu_sec(start_clk), 0, 0.0, 0.0, 0.0);
+	struct vector mom = total_momuntum(Ep, Eq, Er, BP, BQ, BR);
+	fprintf(stdout, "	%E	%E	%E", mom._0, mom._1, mom._2);
+	double div_elect = div_rms_elect(Ep, Eq, Er);
+	double div_magnt = div_rms_magnt(BP, BQ, BR);
+	fprintf(stdout, "	%E	%E", div_elect, div_magnt);
+	fprintf(stdout, "\n");
 
 	// Main loop
 	for (int nt = 1; nt <= nt_end; nt++) {
@@ -169,8 +178,15 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Saved to file. nt=%d\n", nt);
 		}
 
-		fprintf(stdout, "%d	%d	%E	%E	%E\n",
+		fprintf(stdout, "%d	%d	%E	%E	%E",
 				cpu_sec(start_clk), nt, (double)nt*dt, eng_elect, eng_magnt);
+		mom = total_momuntum(Ep, Eq, Er, BP, BQ, BR);
+		fprintf(stdout, "	%E	%E	%E", mom._0, mom._1, mom._2);
+
+		div_elect = div_rms_elect(Ep, Eq, Er);
+		div_magnt = div_rms_magnt(BP, BQ, BR);
+		fprintf(stdout, "	%E	%E", div_elect, div_magnt);
+		fprintf(stdout, "\n");
 	}
 
 	return 0;
